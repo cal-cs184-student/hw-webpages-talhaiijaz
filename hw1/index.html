@@ -682,6 +682,7 @@
 							<td>
 								<img src="images/task6_lzero_plinear.png" alt="L_ZERO, P_LINEAR"/>
 								<figcaption>No mipmapping; bilinear within level 0.</figcaption>
+								<br>
 								<p><b>Time: 11.92 ms</b></p>
 							</td>
 						</tr>
@@ -727,7 +728,7 @@
 					</tbody>
 				</table>
 			</div>
-			<p><b>Performance summary:</b> Fastest is L_NEAREST + P_NEAREST (5.73 ms). L_ZERO is simple but aliases. Adding bilinear pixel (P_LINEAR) costs roughly 2–4 ms per combination. Trilinear (L_LINEAR) adds level blending: P_NEAREST 6.89 ms, P_LINEAR 17.69 ms. Anisotropic (L_ANISO) does up to 8 trilinear samples per pixel on elongated footprints: 11.85 ms with P_NEAREST and 24.24 ms with P_LINEAR—the slowest but best quality on angled surfaces. So anisotropic is about 1.4× the cost of trilinear when both use P_LINEAR.</p>
+			<p><b>Performance summary:</b> Fastest is L_NEAREST + P_NEAREST (5.73 ms). L_ZERO is simple but aliases. Adding bilinear pixel (P_LINEAR) costs roughly 2–4 ms per combination. Trilinear (L_LINEAR) adds level blending: P_NEAREST 6.89 ms, P_LINEAR 17.69 ms. Anisotropic (L_ANISO) does up to 8 trilinear samples per pixel on elongated footprints: 11.85 ms with P_NEAREST and 24.24 ms with P_LINEAR which is the slowest but best quality on angled surfaces. So anisotropic is about 1.4× the cost of trilinear when both use P_LINEAR.</p>
 		</section>
 	</main>
 </body>
