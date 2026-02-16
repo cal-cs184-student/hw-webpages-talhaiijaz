@@ -89,8 +89,12 @@
 		.hero {
 			padding: 4rem 0 3rem;
 			text-align: center;
-			border-bottom: 1px solid var(--border);
 			margin-bottom: 3rem;
+		}
+		.hero-logo {
+			width: 120px;
+			height: auto;
+			margin-bottom: 1.5rem;
 		}
 		.hero h1 {
 			font-weight: 800;
@@ -315,18 +319,15 @@
 
 	<main>
 		<header class="hero">
+			<img src="images/logo.png" alt="Logo" class="hero-logo">
 			<h1>Rasterization</h1>
 			<p class="subtitle">CS184/284A · Homework 1 · Spring 2026</p>
+			<p class="subtitle" style="margin-top: 0.5rem; font-size: 1rem;">Muhammad Talha Ijaz</p>
 			<p class="meta">
 				<a href="https://cs184.eecs.berkeley.edu/sp26/hw/hw1/">Assignment Spec</a> · 
 				<a href="https://github.com/cal-cs184-student/hw-webpages-talhaiijaz">GitHub Repo</a>
 			</p>
 		</header>
-
-		<figure>
-			<img src="images/image1.png" alt="Lion"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
 
 		<section id="overview">
 			<h2>Overview</h2>
@@ -387,7 +388,7 @@
 			<h2>Task 2: Antialiasing by Supersampling</h2>
 			<h3>How we do supersampling</h3>
 			<p>We treat each pixel as a small grid of sample points. The sample rate \(n\) (1, 4, 9, or 16) gives a \(\sqrt{n} \times \sqrt{n}\) grid per pixel. We rasterize at this higher effective resolution into a <b>sample buffer</b>, then <b>downsample</b> to the screen by averaging the samples in each pixel.</p>
-			<p><b>Sample buffer:</b> One 1D vector of <code>Color</code> with <code>width * height * sample_rate</code> entries. For pixel \((x, y)\), the samples live at indices \((y \cdot \text{width} + x) \cdot \text{sample\_rate} + s\) for \(s = 0, \ldots, \text{sample\_rate} - 1\). Subsample index \(s\) maps to grid cell \((i, j)\) with \(i = s \bmod \sqrt{n}\), \(j = s / \sqrt{n}\). Sample positions use the <b>center of each sub-cell</b>: \(\text{sample\_x} = x + (i + 0.5) / \sqrt{n}\), \(\text{sample\_y} = y + (j + 0.5) / \sqrt{n}\).</p>
+			<p><b>Sample buffer:</b> One 1D vector of <code>Color</code> with <code>width * height * sample_rate</code> entries. For pixel \((x, y)\), the samples live at indices \((y \cdot \text{width} + x) \cdot \text{sample_rate} + s\) for \(s = 0, \ldots, \text{sample_rate} - 1\). Subsample index \(s\) maps to grid cell \((i, j)\) with \(i = s \bmod \sqrt{n}\), \(j = s / \sqrt{n}\). Sample positions use the <b>center of each sub-cell</b>: \(\text{sample}_x = x + (i + 0.5) / \sqrt{n}\), \(\text{sample}_y = y + (j + 0.5) / \sqrt{n}\).</p>
 			<p><b>Triangle rasterization:</b> For each pixel in the triangle's bounding box we loop over all subsamples. For each subsample we run the <b>same three-line edge function</b> as in Task 1 at that sample's \((x, y)\). If the sample is inside the triangle we write the triangle color to that sample's slot in the buffer. Points and lines are not supersampled: <code>fill_pixel</code> fills <b>all</b> subsamples of the pixel with the same color so they still show up after resolve.</p>
 			<p><b>Resolve:</b> After all primitives are drawn, <code>resolve_to_framebuffer</code> runs. For each pixel it averages the R, G, and B of all <code>sample_rate</code> samples and writes the result to the final framebuffer (with clamping to \([0, 255]\)).</p>
 			<h3>Why supersampling helps</h3>
@@ -424,7 +425,7 @@
 			<p>Think of drawing the scene on a <b>finer grid</b> (e.g. 4× or 16× more cells per pixel), then <b>averaging</b> each block of cells down to one pixel. That "higher-res then average" is supersampling: we only do the point-in-triangle test at those finer positions and then blend the results. We still only touch pixels in the triangle's bounding box; we just take several samples per pixel and combine them so edges are antialiased instead of jagged.</p>
 			<h3>Extra credit: Jittered supersampling</h3>
 			<p>I implemented <b>jittered supersampling</b> as an alternative to the default <b>grid</b> supersampling. Toggle between them with the <b>J</b> key; the status line shows "Grid supersampling." or "Jittered supersampling." so you know which mode is active when saving screenshots.</p>
-			<p><b>How jittered sampling works:</b> In <b>grid</b> supersampling, the \(n\) samples per pixel sit on a fixed \(\sqrt{n}\times\sqrt{n}\) grid (e.g. sub-cell centers \((i+0.5, j+0.5)\) in normalized coordinates). In <b>jittered</b> sampling, each sample is offset by a small amount <b>within</b> its sub-cell so the pattern is no longer a regular grid. Concretely, for pixel \((x,y)\) and subsample index \(s\) (sub-cell \((i,j)\)), we use \(\text{sample\_x} = x + (i + 0.5 + \text{jitter\_x})/\sqrt{n}\) (and similarly for \(y\)), where \(\text{jitter\_x}, \text{jitter\_y} \in [-0.5, 0.5]\) come from a <b>deterministic hash</b> of \((x, y, s)\) (e.g. \(\sin(x\cdot 127.1 + y\cdot 311.7 + s\cdot 74.7)\) mapped to \([-0.5, 0.5]\)). That keeps the same scene rendering the same every time. The rest of the pipeline is unchanged: point-in-triangle at each sample, write to the sample buffer, resolve by averaging.</p>
+			<p><b>How jittered sampling works:</b> In <b>grid</b> supersampling, the \(n\) samples per pixel sit on a fixed \(\sqrt{n}\times\sqrt{n}\) grid (e.g. sub-cell centers \((i+0.5, j+0.5)\) in normalized coordinates). In <b>jittered</b> sampling, each sample is offset by a small amount <b>within</b> its sub-cell so the pattern is no longer a regular grid. Concretely, for pixel \((x,y)\) and subsample index \(s\) (sub-cell \((i,j)\)), we use \(\text{sample}_x = x + (i + 0.5 + \text{jitter}_x)/\sqrt{n}\) (and similarly for \(y\)), where \(\text{jitter}_x, \text{jitter}_y \in [-0.5, 0.5]\) come from a <b>deterministic hash</b> of \((x, y, s)\) (e.g. \(\sin(x\cdot 127.1 + y\cdot 311.7 + s\cdot 74.7)\) mapped to \([-0.5, 0.5]\)). That keeps the same scene rendering the same every time. The rest of the pipeline is unchanged: point-in-triangle at each sample, write to the sample buffer, resolve by averaging.</p>
 			<p><b>Why jittered can look better:</b> A regular grid aligns samples across pixels, which can reinforce certain aliasing (e.g. stair-stepping or Moiré). Jittering breaks that alignment so the same edge hits different relative positions in different pixels; after averaging, edges often look smoother and thin features can show fewer artifacts than with grid at the same sample count.</p>
 			<p><b>Comparison:</b> Below are three screenshots with <b>Jittered</b> supersampling at sample rates <b>1</b>, <b>4</b>, and <b>16</b> (same scene as above). At rate 1, jittered still shows strong aliasing (one sample per pixel). At 4 and 16, the pixel inspector shows smoother gradients along edges and the thin red line; for a direct grid-vs-jittered comparison, render the same view with Grid and Jittered at the same rate (e.g. 4 or 16) and place the two side by side. All screenshots were taken with the <b>S</b> key.</p>
 			<div class="table-wrap">
