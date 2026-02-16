@@ -52,10 +52,11 @@
 			position: sticky;
 			top: 0;
 			z-index: 50;
-			background: rgba(255, 255, 255, 0.9);
+			background: rgba(255, 255, 255, 0.95);
 			backdrop-filter: blur(12px);
 			border-bottom: 1px solid var(--border);
-			padding: 1rem 2rem;
+			padding: 0.875rem 2rem;
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 		}
 		.nav-inner {
 			max-width: var(--max-width);
@@ -64,19 +65,104 @@
 			align-items: center;
 			justify-content: space-between;
 		}
+		.nav-links {
+			display: flex;
+			gap: 2rem;
+			align-items: center;
+		}
 		.nav a {
 			color: var(--text-secondary);
 			text-decoration: none;
-			font-size: 0.9375rem;
+			font-size: 0.875rem;
 			font-weight: 500;
-			transition: color 0.2s;
+			transition: all 0.2s ease;
+			position: relative;
 		}
 		.nav a:hover {
 			color: var(--accent);
 		}
+		.nav-links > a::after {
+			content: '';
+			position: absolute;
+			bottom: -4px;
+			left: 0;
+			width: 0;
+			height: 2px;
+			background: var(--accent);
+			transition: width 0.2s ease;
+		}
+		.nav-links > a:hover::after {
+			width: 100%;
+		}
 		.nav .title {
 			font-weight: 600;
 			color: var(--text);
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+		.nav .title:hover {
+			color: var(--accent);
+		}
+
+		/* Dropdown */
+		.dropdown {
+			position: relative;
+		}
+		.dropdown-btn {
+			background: none;
+			border: none;
+			color: var(--text-secondary);
+			font-size: 0.875rem;
+			font-weight: 500;
+			font-family: var(--font-body);
+			cursor: pointer;
+			padding: 0.5rem 0;
+			transition: color 0.2s ease;
+			position: relative;
+		}
+		.dropdown-btn:hover {
+			color: var(--accent);
+		}
+		.dropdown-content {
+			display: none;
+			position: absolute;
+			top: calc(100% + 0.5rem);
+			right: 0;
+			background: white;
+			min-width: 260px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+			border-radius: var(--radius-sm);
+			border: 1px solid var(--border);
+			padding: 0.5rem 0;
+			z-index: 100;
+		}
+		.dropdown:hover .dropdown-content,
+		.dropdown-content:hover {
+			display: block;
+		}
+		.dropdown::before {
+			content: '';
+			position: absolute;
+			top: 100%;
+			left: 0;
+			right: 0;
+			height: 0.5rem;
+			background: transparent;
+		}
+		.dropdown-content a {
+			display: block;
+			padding: 0.75rem 1rem;
+			color: var(--text);
+			font-size: 0.875rem;
+			transition: all 0.2s ease;
+			border-left: 3px solid transparent;
+			white-space: nowrap;
+		}
+		.dropdown-content a:hover {
+			background: var(--bg-secondary);
+			border-left-color: var(--accent);
+			color: var(--accent);
 		}
 
 		main {
@@ -286,12 +372,27 @@
 
 		/* Responsive */
 		@media (max-width: 768px) {
-			.nav { padding: 1rem; }
+			.nav { 
+				padding: 0.75rem 1rem;
+			}
+			.nav-links {
+				gap: 1rem;
+				font-size: 0.8125rem;
+			}
+			.nav .title {
+				font-size: 0.875rem;
+			}
 			main { padding: 0 1rem 3rem; }
 			.hero { padding: 2rem 0 2rem; }
 			.hero h1 { font-size: 2rem; }
 			h2 { font-size: 1.5rem; }
 			h3 { font-size: 1.125rem; }
+		}
+		
+		@media (max-width: 640px) {
+			.nav-links {
+				display: none;
+			}
 		}
 
 		@media print {
@@ -313,7 +414,20 @@
 	<nav class="nav">
 		<div class="nav-inner">
 			<a href="../index.html" class="title">← CS184 Writeups</a>
-			<a href="#overview">Overview</a>
+			<div class="nav-links">
+				<a href="#overview">Overview</a>
+				<div class="dropdown">
+					<button class="dropdown-btn">Tasks ▾</button>
+					<div class="dropdown-content">
+						<a href="#task1">Task 1: Triangle Rasterization</a>
+						<a href="#task2">Task 2: Antialiasing</a>
+						<a href="#task3">Task 3: Transforms</a>
+						<a href="#task4">Task 4: Barycentric Coordinates</a>
+						<a href="#task5">Task 5: Texture Mapping</a>
+						<a href="#task6">Task 6: Mipmaps</a>
+					</div>
+				</div>
+			</div>
 		</div>
 	</nav>
 
@@ -325,16 +439,28 @@
 			<p class="subtitle" style="margin-top: 0.5rem; font-size: 1rem;">Muhammad Talha Ijaz</p>
 			<p class="meta">
 				<a href="https://cs184.eecs.berkeley.edu/sp26/hw/hw1/">Assignment Spec</a> · 
-				<a href="https://github.com/cal-cs184-student/hw-webpages-talhaiijaz">GitHub Repo</a>
+				<a href="https://github.com/cal-cs184-student/hw1-rasterizer-talhaijaz">GitHub Repo</a>
 			</p>
 		</header>
 
 		<section id="overview">
 			<h2>Overview</h2>
-			<p>Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.</p>
+			<p>In this homework, I implemented a complete rasterization pipeline from scratch, building the fundamental algorithms that transform vector graphics into pixel-based images. The homework covers the entire process from basic triangle rasterization to advanced texture mapping techniques.</p>
+			
+			<p>The implementation includes:</p>
+			<ul>
+				<li><strong>Triangle Rasterization:</strong> Developed an efficient algorithm using bounding boxes and edge functions to determine which pixels lie inside a triangle, with optimizations for early exit and incremental computation.</li>
+				<li><strong>Supersampling Antialiasing:</strong> Implemented a supersampling pipeline that takes multiple samples per pixel to smooth jagged edges, including both regular grid and jittered sampling patterns.</li>
+				<li><strong>Geometric Transforms:</strong> Built a transformation system using homogeneous coordinates to translate, rotate, and scale vector graphics, creating hierarchical models with multiple articulated parts.</li>
+				<li><strong>Barycentric Interpolation:</strong> Used barycentric coordinates to smoothly interpolate colors and texture coordinates across triangle surfaces, enabling gradient fills and texture mapping.</li>
+				<li><strong>Texture Mapping:</strong> Implemented pixel sampling methods (nearest-neighbor and bilinear filtering) to map 2D textures onto 3D geometry with proper filtering.</li>
+				<li><strong>Mipmapping:</strong> Developed level-of-detail texture sampling using mipmaps to reduce aliasing when textures are minified, including trilinear filtering and anisotropic filtering for oblique viewing angles.</li>
+			</ul>
+			
+			<p>Through this homework, I gained deep insights into how modern graphics pipelines work at a fundamental level. The most interesting aspects were understanding the tradeoffs between quality and performance (supersampling vs. speed), and seeing how mathematical concepts like barycentric coordinates and linear algebra directly translate into practical rendering techniques. Implementing mipmaps was particularly enlightening—it showed how precomputation and clever data structures can dramatically improve both visual quality and performance.</p>
 		</section>
 
-		<section>
+		<section id="task1">
 			<h2>Task 1: Drawing Single-Color Triangles</h2>
 			<h3>How we rasterize triangles</h3>
 			<p>We compute the <b>bounding box</b> of the triangle (min/max of the vertices' \(x\) and \(y\)), clamp it to the screen, then for each pixel in that box test whether the <b>pixel center</b> \((x+0.5, y+0.5)\) lies inside the triangle. We use the <b>three-line edge function</b> from lecture: for each edge from \(A\) to \(B\), \(L = (B.x - A.x)(P.y - A.y) - (B.y - A.y)(P.x - A.x)\), with \(P\) the pixel center. The point is <b>inside</b> if all three \(L\) values have the <b>same sign</b>. We treat both all-positive and all-negative as inside to support <b>CW and CCW</b> winding, and use \(\geq\)/\(\leq\) so samples on edges are drawn. When the center is inside, we call <code>fill_pixel(x, y, color)</code>.</p>
@@ -384,7 +510,7 @@
 			<p>In short: bounding box, center test, three-line check, plus incremental edge updates and early exit for speed.</p>
 		</section>
 
-		<section>
+		<section id="task2">
 			<h2>Task 2: Antialiasing by Supersampling</h2>
 			<h3>How we do supersampling</h3>
 			<p>We treat each pixel as a small grid of sample points. The sample rate \(n\) (1, 4, 9, or 16) gives a \(\sqrt{n} \times \sqrt{n}\) grid per pixel. We rasterize at this higher effective resolution into a <b>sample buffer</b>, then <b>downsample</b> to the screen by averaging the samples in each pixel.</p>
@@ -448,7 +574,7 @@
 			</div>
 		</section>
 
-		<section>
+		<section id="task3">
 			<h2>Task 3: Transforms</h2>
 			<h3>Custom cubeman: <code>my_robot.svg</code></h3>
 			<p>I created an updated cubeman in <b><code>docs/my_robot.svg</code></b> that uses the <code>translate</code>, <code>scale</code>, and <code>rotate</code> transforms from <code>transforms.cpp</code> to pose the robot in a <b>ballet-style pose</b>: arms raised and curved above the head, legs spread with a slight bend at the knees.</p>
@@ -479,7 +605,7 @@
 			</figure>
 		</section>
 
-		<section>
+		<section id="task4">
 			<h2>Task 4: Barycentric coordinates</h2>
 			<h3>What are barycentric coordinates?</h3>
 			<p>For a triangle with vertices \(P_0\), \(P_1\), \(P_2\), the <b>barycentric coordinates</b> of a point \(P\) are three weights \((\alpha, \beta, \gamma)\) such that \(P = \alpha P_0 + \beta P_1 + \gamma P_2\) with \(\alpha + \beta + \gamma = 1\). So \(P\) is a weighted average of the three vertices: \(\alpha\) is "how much of \(P_0\)", \(\beta\) "how much of \(P_1\)", \(\gamma\) "how much of \(P_2\)". \(P\) is <b>inside</b> the triangle (including edges) exactly when \(\alpha, \beta, \gamma \ge 0\). On an edge one weight is 0; at a vertex one weight is 1 and the others 0.</p>
@@ -495,7 +621,7 @@
 			</figure>
 		</section>
 
-		<section>
+		<section id="task5">
 			<h2>Task 5: "Pixel sampling" for texture mapping</h2>
 			<h3>What is pixel sampling?</h3>
 			<p>We have a texture (a 2D image) and a sample point in texture space given by <b>(u, v)</b> in \([0,1]\). <b>Pixel sampling</b> is the process of turning that (u, v) into an RGB color by looking up the texture's texels. The "pixel sampling method" is how we do that lookup.</p>
@@ -535,7 +661,7 @@
 			<p><b>When do the two methods differ a lot?</b> When the texture is <b>magnified</b> (one texel covers many screen pixels) or when (u, v) varies smoothly across texel boundaries, nearest gives visible blocks and jagged transitions while bilinear gives gradual blends. At <b>diagonal or curved boundaries</b> in the texture (e.g. coastlines, grid lines), nearest keeps hard steps; bilinear softens them. When the texture is <b>minified</b> or viewed from far away, both can look similar; supersampling (rate 16) mainly improves <b>geometric</b> edges; it doesn't change the texture's look, so the blockiness of nearest vs the smoothness of bilinear is visible at both rates.</p>
 		</section>
 
-		<section>
+		<section id="task6">
 			<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
 			<h3>What is level sampling?</h3>
 			<p>When a texture is <b>minified</b>—many texels map to one screen pixel—sampling only from the full-resolution level causes aliasing: high-frequency detail in the texture gets folded into wrong frequencies and we see moiré, shimmer, or noisy pixels. <b>Level sampling</b> (with mipmaps) addresses this by precomputing a pyramid of downsampled texture levels (level 0 = full res, level 1 = half, etc.). For each pixel we estimate <em>which</em> mip level best matches the texel footprint (how much of the texture one pixel "sees"), then sample from that level (or blend between two levels). That way we average many texels in a single lookup instead of point-sampling the full-res texture, which reduces minification aliasing.</p>
@@ -619,24 +745,6 @@
 				</table>
 			</div>
 			<p><b>Performance summary:</b> Fastest is L_NEAREST + P_NEAREST (5.73 ms). L_ZERO is simple but aliases. Adding bilinear pixel (P_LINEAR) costs roughly 2–4 ms per combination. Trilinear (L_LINEAR) adds level blending: P_NEAREST 6.89 ms, P_LINEAR 17.69 ms. Anisotropic (L_ANISO) does up to 8 trilinear samples per pixel on elongated footprints: 11.85 ms with P_NEAREST and 24.24 ms with P_LINEAR—the slowest but best quality on angled surfaces. So anisotropic is about 1.4× the cost of trilinear when both use P_LINEAR.</p>
-		</section>
-
-		<section>
-			<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
-			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-		</section>
-
-		<section>
-			<h2>Additional Notes (please remove)</h2>
-			<ul>
-				<li>You can also add code if you'd like as so: <code>code code code</code></li>
-				<li>If you'd like to add math equations,
-					<ul>
-						<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-						<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-					</ul>
-				</li>
-			</ul>
 		</section>
 	</main>
 </body>
