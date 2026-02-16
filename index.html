@@ -79,13 +79,17 @@
 	<script>
 		// Only modify links if we're on GitHub Pages
 		if (window.location.hostname.includes('github.io')) {
-			var links = document.body.getElementsByTagName("a")
-			var a = window.location.href.indexOf(".io")
-			var repo_name = window.location.href.substring(a+3)
+			var links = document.querySelectorAll('.content a');
+			var pathArray = window.location.pathname.split('/');
+			var repoName = pathArray[1]; // Gets the repo name from URL
+			
 			for(var i = 0; i < links.length; i++){
-				var link = links[i]
-				var actual_name = link.href.substring(link.href.indexOf(".io")+4)
-				link.href = repo_name + actual_name
+				var link = links[i];
+				var href = link.getAttribute('href');
+				// Only modify if it's a relative path and hasn't been modified yet
+				if (href && !href.startsWith('http') && !href.startsWith('/' + repoName)) {
+					link.href = '/' + repoName + '/' + href;
+				}
 			}
 		}
 	</script>
