@@ -1,368 +1,650 @@
-<html>
-	<head>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-		<style>
-			h1 {
-				text-align: center;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>HW1 — Rasterization · CS184/284A</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--bg: #fafafa;
+			--bg-card: #ffffff;
+			--text: #171717;
+			--text-muted: #737373;
+			--accent: #171717;
+			--border: #e5e5e5;
+			--code-bg: #f5f5f5;
+			--radius: 8px;
+			--radius-sm: 6px;
+			--font-display: 'Geist', -apple-system, sans-serif;
+			--font-body: 'Geist', -apple-system, sans-serif;
+			--font-mono: 'Geist Mono', monospace;
+			--max-width: 42rem;
+			--nav-height: 3.5rem;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html {
+			scroll-behavior: smooth;
+		}
+
+		body {
+			margin: 0;
+			font-family: var(--font-body);
+			font-size: 0.875rem;
+			line-height: 1.6;
+			color: var(--text);
+			background: var(--bg);
+			min-height: 100vh;
+			-webkit-font-smoothing: antialiased;
+		}
+
+		/* Top nav — Conductor style */
+		.nav {
+			position: sticky;
+			top: 0;
+			z-index: 10;
+			height: var(--nav-height);
+			background: rgba(250, 250, 250, 0.8);
+			backdrop-filter: blur(12px);
+			border-bottom: 1px solid var(--border);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 1rem;
+		}
+		.nav-inner {
+			max-width: var(--max-width);
+			width: 100%;
+			margin: 0 auto;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+		.nav a {
+			color: var(--text);
+			text-decoration: none;
+			font-size: 0.875rem;
+			font-weight: 500;
+			transition: color 0.2s;
+		}
+		.nav a:hover {
+			color: var(--text-muted);
+		}
+		.nav .title {
+			font-family: var(--font-display);
+			font-weight: 600;
+			font-size: 0.875rem;
+			color: var(--text);
+		}
+
+		main {
+			position: relative;
+			z-index: 1;
+			max-width: var(--max-width);
+			margin: 0 auto;
+			padding: 3rem 1rem 4rem;
+		}
+
+		/* Hero — Conductor style */
+		.hero {
+			text-align: left;
+			margin-bottom: 3rem;
+		}
+		.hero h1 {
+			font-family: var(--font-display);
+			font-weight: 700;
+			font-size: clamp(1.25rem, 4vw, 1.5rem);
+			letter-spacing: -0.02em;
+			line-height: 1.3;
+			margin: 0 0 0.75rem;
+			color: var(--text);
+		}
+		.hero .meta {
+			color: var(--text-muted);
+			font-size: 0.875rem;
+			line-height: 1.5;
+		}
+		.hero .meta a {
+			color: var(--text);
+			text-decoration: none;
+			border-bottom: 1px solid var(--border);
+			transition: border-color 0.2s;
+		}
+		.hero .meta a:hover {
+			border-bottom-color: var(--text);
+		}
+
+		section {
+			margin-bottom: 2.5rem;
+			animation: fadeUp 0.5s ease-out backwards;
+		}
+		section:nth-child(1) { animation-delay: 0.05s; }
+		section:nth-child(2) { animation-delay: 0.1s; }
+		section:nth-child(3) { animation-delay: 0.15s; }
+		section:nth-child(4) { animation-delay: 0.2s; }
+		section:nth-child(5) { animation-delay: 0.25s; }
+		section:nth-child(6) { animation-delay: 0.3s; }
+		section:nth-child(7) { animation-delay: 0.35s; }
+		section:nth-child(8) { animation-delay: 0.4s; }
+		section:nth-child(9) { animation-delay: 0.45s; }
+		section:nth-child(10) { animation-delay: 0.5s; }
+		section:nth-child(11) { animation-delay: 0.55s; }
+		@keyframes fadeUp {
+			from {
+				opacity: 0;
+				transform: translateY(12px);
 			}
-
-			.container {
-				margin: 0 auto;
-				padding: 60px 20%;
+			to {
+				opacity: 1;
+				transform: translateY(0);
 			}
+		}
 
-			figure {
-				text-align: center;
-			}
+		/* Section titles — Conductor style */
+		h2 {
+			font-family: var(--font-display);
+			font-weight: 600;
+			font-size: 1rem;
+			letter-spacing: -0.01em;
+			color: var(--text);
+			margin: 2rem 0 0.75rem;
+			padding-bottom: 0;
+			border-bottom: none;
+		}
+		h2:first-of-type {
+			margin-top: 0;
+		}
+		h3 {
+			font-family: var(--font-body);
+			font-weight: 600;
+			font-size: 0.875rem;
+			color: var(--text);
+			margin: 1.25rem 0 0.5rem;
+		}
+		p {
+			margin: 0 0 0.75rem;
+			color: var(--text);
+		}
+		ul {
+			margin: 0 0 0.75rem;
+			padding-left: 1.25rem;
+		}
+		li {
+			margin-bottom: 0.25rem;
+		}
+		a {
+			color: var(--text);
+			text-decoration: none;
+			border-bottom: 1px solid var(--border);
+			transition: border-color 0.2s;
+		}
+		a:hover {
+			border-bottom-color: var(--text);
+		}
 
-			img {
-				display: inline-block;
-			}
+		code {
+			font-family: var(--font-mono);
+			font-size: 0.8125rem;
+			background: var(--code-bg);
+			color: var(--text);
+			padding: 0.125rem 0.375rem;
+			border-radius: var(--radius-sm);
+			border: 1px solid var(--border);
+		}
+		pre, .mjx-chtml {
+			font-family: var(--font-mono);
+		}
+		.MathJax {
+			color: var(--text) !important;
+		}
 
-			body {
-				font-family: 'Inter', sans-serif;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="container">
-		<h1>CS184/284A Spring 2026 Homework 1 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		/* Figures — Conductor style */
+		figure {
+			margin: 1.25rem 0;
+			text-align: center;
+		}
+		figure img {
+			display: block;
+			max-width: 100%;
+			height: auto;
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
+			background: var(--bg-card);
+			box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+			transition: box-shadow 0.2s ease;
+		}
+		figure img:hover {
+			box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+		}
+		figcaption {
+			margin-top: 0.5rem;
+			font-size: 0.8125rem;
+			color: var(--text-muted);
+			line-height: 1.5;
+			text-align: left;
+			max-width: 100%;
+		}
 
-		<br>
+		/* Tables — Conductor style */
+		.table-wrap {
+			overflow-x: auto;
+			margin: 1rem 0;
+			border-radius: var(--radius);
+			border: 1px solid var(--border);
+			background: var(--bg-card);
+		}
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			font-size: 0.8125rem;
+		}
+		th {
+			text-align: left;
+			padding: 0.5rem 0.75rem;
+			background: var(--bg);
+			color: var(--text);
+			font-weight: 600;
+			font-family: var(--font-body);
+			border-bottom: 1px solid var(--border);
+		}
+		td {
+			padding: 0.5rem 0.75rem;
+			border-bottom: 1px solid var(--border);
+			vertical-align: top;
+			background: var(--bg-card);
+		}
+		tr:last-child td {
+			border-bottom: none;
+		}
+		tr:hover td {
+			background: var(--bg);
+		}
+		thead tr:hover td,
+		thead th {
+			background: var(--bg);
+		}
+		table figcaption,
+		table p {
+			margin: 0.25rem 0 0;
+			font-size: 0.75rem;
+		}
+		table img {
+			max-width: 100%;
+			height: auto;
+			border-radius: var(--radius-sm);
+			border: 1px solid var(--border);
+		}
+		table small {
+			display: block;
+			color: var(--text-muted);
+			font-size: 0.75rem;
+			margin-top: 2px;
+		}
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp26/hw/hw1/">cs184.eecs.berkeley.edu/sp26/hw/hw1</a>
-		
-		<br>
+		.comparison-table td {
+			text-align: center;
+			vertical-align: top;
+		}
+		.comparison-table figcaption {
+			text-align: center;
+			margin-top: 0.5rem;
+		}
 
-		Link to GitHub repository: (TODO) <a href="https://github.com/cal-cs184-student/hw-webpages-talhaiijaz">hw-webpages-talhaiijaz</a>
+		@media print {
+			.nav { display: none !important; }
+			body { background: #fff; color: #111; }
+			main { padding: 0; }
+			h2, h3 { color: #111; }
+			a { color: #111; text-decoration-color: #999; }
+			code { background: #f5f5f5; color: #111; border-color: #ddd; }
+			figure img { box-shadow: none; border-color: #ddd; }
+			figcaption { color: #444; }
+			.table-wrap { border-color: #ddd; background: #fff; }
+			th, td { border-color: #ddd; background: #fff !important; }
+			tr:hover td { background: #fff !important; }
+			section { animation: none; }
+		}
+	</style>
+</head>
+<body>
+	<nav class="nav">
+		<div class="nav-inner">
+			<a href="../index.html" class="title">← CS184 Writeups</a>
+			<a href="#overview">Overview</a>
+		</div>
+	</nav>
+
+	<main>
+		<header class="hero">
+			<h1>Homework 1 — Rasterization</h1>
+			<p class="meta">CS184/284A Spring 2026 · Names: </p>
+			<p class="meta">
+				Link to assignment: <a href="https://cs184.eecs.berkeley.edu/sp26/hw/hw1/">cs184.eecs.berkeley.edu/sp26/hw/hw1</a><br>
+				Link to repo: <a href="https://github.com/cal-cs184-student/hw-webpages-talhaiijaz">hw-webpages-talhaiijaz</a>
+			</p>
+		</header>
 
 		<figure>
-			<img src="images/image1.png" alt="Lion" style="width:50%"/>
+			<img src="images/image1.png" alt="Lion"/>
 			<figcaption>You can add images with captions!</figcaption>
 		</figure>
 
-		<!--
-		We've already added one heading per task, to make your write-up as navigable when grading. Please fit your write-up within these sections!
-		-->
+		<section id="overview">
+			<h2>Overview</h2>
+			<p>Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.</p>
+		</section>
 
-		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+		<section>
+			<h2>Task 1: Drawing Single-Color Triangles</h2>
+			<h3>How we rasterize triangles</h3>
+			<p>We compute the <b>bounding box</b> of the triangle (min/max of the vertices' \(x\) and \(y\)), clamp it to the screen, then for each pixel in that box test whether the <b>pixel center</b> \((x+0.5, y+0.5)\) lies inside the triangle. We use the <b>three-line edge function</b> from lecture: for each edge from \(A\) to \(B\), \(L = (B.x - A.x)(P.y - A.y) - (B.y - A.y)(P.x - A.x)\), with \(P\) the pixel center. The point is <b>inside</b> if all three \(L\) values have the <b>same sign</b>. We treat both all-positive and all-negative as inside to support <b>CW and CCW</b> winding, and use \(\geq\)/\(\leq\) so samples on edges are drawn. When the center is inside, we call <code>fill_pixel(x, y, color)</code>.</p>
+			<h3>Bounding box efficiency</h3>
+			<p>We only iterate over pixels in the bounding box, so we never test pixels clearly outside the triangle. The cost is one point-in-triangle test per pixel in the box, and we never touch pixels outside it.</p>
+			<h3>Picture 1.1</h3>
+			<figure>
+				<img src="images/task1_screenshot.png" alt="basic/test4.svg with pixel inspector on thin magenta strip"/>
+				<figcaption><b>basic/test4.svg</b> with default view and the pixel inspector over the thin magenta strip. The magnified inset shows <b>two disconnected magenta segments</b> with a gap between them. At <b>1 sample per pixel</b>, the strip is thinner than a pixel in places, so some pixel centers miss it and those pixels stay white — a clear example of <b>aliasing</b> on narrow geometry.</figcaption>
+			</figure>
+			<h3>Extra credit: Optimizations</h3>
+			<p>Beyond the basic bounding box, I added two optimizations and timed them with <code>clock()</code> around <code>svg.draw()</code> in <code>DrawRend::redraw()</code>, on <code>illustration/05_lion.svg</code> at 2000×2000 in headless mode (best of 3 runs).</p>
+			<div class="table-wrap">
+				<table>
+					<tr>
+						<th>Version</th>
+						<th>Time (ms)</th>
+						<th>Speedup</th>
+						<th>Description</th>
+					</tr>
+					<tr>
+						<td>Baseline</td>
+						<td>~4.3 ms</td>
+						<td>1.0x</td>
+						<td>Bounding box with per-pixel edge function evaluation.</td>
+					</tr>
+					<tr>
+						<td>+ Incremental edge functions</td>
+						<td>~4.3 ms</td>
+						<td>~1.0x</td>
+						<td>Precompute edge coefficients and step edge values by constants when moving between pixels (compiler likely did similar).</td>
+					</tr>
+					<tr>
+						<td>+ Early exit on convex break</td>
+						<td>~3.1 ms</td>
+						<td>~1.4x</td>
+						<td>Once we leave the triangle while scanning down a column, we break; skips ~50% of empty bbox pixels for typical triangles.</td>
+					</tr>
+				</table>
+			</div>
+			<h3>The Big Picture</h3>
+			<p>Imagine a triangle on graph paper: you only need to decide which squares to color.</p>
+			<p><b>Step 1: Don't check the whole page.</b> Only the <b>tightest axis-aligned rectangle</b> around the triangle (the <b>bounding box</b>) can contain covered pixels, so we only consider squares inside it.</p>
+			<p><b>Step 2: Check each square's center.</b> For each square in the box we ask: is its <b>center</b> \((x+0.5, y+0.5)\) inside the triangle? The center is the single sample that represents the pixel.</p>
+			<p><b>Step 3: The three-line test.</b> Each edge splits the plane in two. A point is inside only if it's on the <b>same side of all three edges</b> (like being inside a room: interior side of every wall). The edge function gives a sign per edge; same sign for all three → inside (sign depends on CW/CCW); mixed signs → outside.</p>
+			<p><b>The optimization trick.</b> The edge function is <b>linear</b> in position, so moving one pixel changes it by a constant. We compute it once per row/column and <b>update by addition</b> instead of recomputing. Because the triangle is <b>convex</b>, once we leave it along a column we don't re-enter, so we <b>break early</b> and skip the rest of that column.</p>
+			<p>In short: bounding box, center test, three-line check, plus incremental edge updates and early exit for speed.</p>
+		</section>
 
-		<h2>Task 1: Drawing Single-Color Triangles</h2>
+		<section>
+			<h2>Task 2: Antialiasing by Supersampling</h2>
+			<h3>How we do supersampling</h3>
+			<p>We treat each pixel as a small grid of sample points. The sample rate \(n\) (1, 4, 9, or 16) gives a \(\sqrt{n} \times \sqrt{n}\) grid per pixel. We rasterize at this higher effective resolution into a <b>sample buffer</b>, then <b>downsample</b> to the screen by averaging the samples in each pixel.</p>
+			<p><b>Sample buffer:</b> One 1D vector of <code>Color</code> with <code>width * height * sample_rate</code> entries. For pixel \((x, y)\), the samples live at indices \((y \cdot \text{width} + x) \cdot \text{sample\_rate} + s\) for \(s = 0, \ldots, \text{sample\_rate} - 1\). Subsample index \(s\) maps to grid cell \((i, j)\) with \(i = s \bmod \sqrt{n}\), \(j = s / \sqrt{n}\). Sample positions use the <b>center of each sub-cell</b>: \(\text{sample\_x} = x + (i + 0.5) / \sqrt{n}\), \(\text{sample\_y} = y + (j + 0.5) / \sqrt{n}\).</p>
+			<p><b>Triangle rasterization:</b> For each pixel in the triangle's bounding box we loop over all subsamples. For each subsample we run the <b>same three-line edge function</b> as in Task 1 at that sample's \((x, y)\). If the sample is inside the triangle we write the triangle color to that sample's slot in the buffer. Points and lines are not supersampled: <code>fill_pixel</code> fills <b>all</b> subsamples of the pixel with the same color so they still show up after resolve.</p>
+			<p><b>Resolve:</b> After all primitives are drawn, <code>resolve_to_framebuffer</code> runs. For each pixel it averages the R, G, and B of all <code>sample_rate</code> samples and writes the result to the final framebuffer (with clamping to \([0, 255]\)).</p>
+			<h3>Why supersampling helps</h3>
+			<p>With one sample per pixel at the center, coverage is binary (inside or outside), so edges look jagged (aliasing). With multiple samples per pixel, edge pixels get a mix of triangle and background; averaging gives <b>fractional coverage</b> and smoother edges without checking more pixels than we already do in the bounding box.</p>
+			<h3>Pipeline changes</h3>
+			<ul>
+				<li><code>set_sample_rate</code> and <code>set_framebuffer_target</code> resize the sample buffer to <code>width * height * sample_rate</code>.</li>
+				<li><code>fill_pixel(x, y, c)</code> writes \(c\) to <b>all</b> <code>sample_rate</code> entries for pixel \((x, y)\) so points and lines still draw correctly.</li>
+				<li><code>rasterize_triangle</code> tests <b>each subsample</b> with the edge functions and only fills the samples that are inside the triangle.</li>
+				<li><code>resolve_to_framebuffer</code> no longer reads a single sample per pixel; it <b>averages</b> all subsamples for that pixel and writes the result.</li>
+			</ul>
+			<h3>Screenshots: sample rates 1, 4, and 16</h3>
+			<p>basic/test4.svg with default view; pixel inspector over an edge to show the effect of supersampling.</p>
+			<div class="table-wrap">
+				<table class="comparison-table">
+					<tr>
+						<td>
+							<img src="images/task2_rate1.png" alt="Supersample rate 1"/>
+							<figcaption><b>Sample rate 1.</b> Edges are jagged; each pixel is either fully filled or fully background.</figcaption>
+						</td>
+						<td>
+							<img src="images/task2_rate4.png" alt="Supersample rate 4"/>
+							<figcaption><b>Sample rate 4 (2×2 grid).</b> Edge pixels get partial coverage; the grid shows varying intensity from sub-pixel coverage.</figcaption>
+						</td>
+						<td>
+							<img src="images/task2_rate16.png" alt="Supersample rate 16"/>
+							<figcaption><b>Sample rate 16 (4×4 grid).</b> Edges are noticeably smoother; the magnified grid shows a soft gradient along the edge.</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p><b>Why these results:</b> At rate 1, one sample per pixel gives binary coverage and stair-stepped edges. At 4 and 16, edge pixels contain both inside and outside samples; averaging gives in-between shades, so edges look smoother. Higher sample rate improves smoothness at the cost of more memory and work per pixel.</p>
+			<h3>The Big Picture</h3>
+			<p>Think of drawing the scene on a <b>finer grid</b> (e.g. 4× or 16× more cells per pixel), then <b>averaging</b> each block of cells down to one pixel. That "higher-res then average" is supersampling: we only do the point-in-triangle test at those finer positions and then blend the results. We still only touch pixels in the triangle's bounding box; we just take several samples per pixel and combine them so edges are antialiased instead of jagged.</p>
+			<h3>Extra credit: Jittered supersampling</h3>
+			<p>I implemented <b>jittered supersampling</b> as an alternative to the default <b>grid</b> supersampling. Toggle between them with the <b>J</b> key; the status line shows "Grid supersampling." or "Jittered supersampling." so you know which mode is active when saving screenshots.</p>
+			<p><b>How jittered sampling works:</b> In <b>grid</b> supersampling, the \(n\) samples per pixel sit on a fixed \(\sqrt{n}\times\sqrt{n}\) grid (e.g. sub-cell centers \((i+0.5, j+0.5)\) in normalized coordinates). In <b>jittered</b> sampling, each sample is offset by a small amount <b>within</b> its sub-cell so the pattern is no longer a regular grid. Concretely, for pixel \((x,y)\) and subsample index \(s\) (sub-cell \((i,j)\)), we use \(\text{sample\_x} = x + (i + 0.5 + \text{jitter\_x})/\sqrt{n}\) (and similarly for \(y\)), where \(\text{jitter\_x}, \text{jitter\_y} \in [-0.5, 0.5]\) come from a <b>deterministic hash</b> of \((x, y, s)\) (e.g. \(\sin(x\cdot 127.1 + y\cdot 311.7 + s\cdot 74.7)\) mapped to \([-0.5, 0.5]\)). That keeps the same scene rendering the same every time. The rest of the pipeline is unchanged: point-in-triangle at each sample, write to the sample buffer, resolve by averaging.</p>
+			<p><b>Why jittered can look better:</b> A regular grid aligns samples across pixels, which can reinforce certain aliasing (e.g. stair-stepping or Moiré). Jittering breaks that alignment so the same edge hits different relative positions in different pixels; after averaging, edges often look smoother and thin features can show fewer artifacts than with grid at the same sample count.</p>
+			<p><b>Comparison:</b> Below are three screenshots with <b>Jittered</b> supersampling at sample rates <b>1</b>, <b>4</b>, and <b>16</b> (same scene as above). At rate 1, jittered still shows strong aliasing (one sample per pixel). At 4 and 16, the pixel inspector shows smoother gradients along edges and the thin red line; for a direct grid-vs-jittered comparison, render the same view with Grid and Jittered at the same rate (e.g. 4 or 16) and place the two side by side. All screenshots were taken with the <b>S</b> key.</p>
+			<div class="table-wrap">
+				<table class="comparison-table">
+					<tr>
+						<td>
+							<img src="images/task2_ec_jitter1.png" alt="Jittered, rate 1"/>
+							<figcaption><b>Jittered, 1 sample/pixel.</b> Aliasing; same as grid at rate 1.</figcaption>
+						</td>
+						<td>
+							<img src="images/task2_ec_jitter4.png" alt="Jittered, rate 4"/>
+							<figcaption><b>Jittered, 4 samples/pixel.</b> Smoother edges; gradient in magnified grid.</figcaption>
+						</td>
+						<td>
+							<img src="images/task2_ec_jitter16.png" alt="Jittered, rate 16"/>
+							<figcaption><b>Jittered, 16 samples/pixel.</b> Smooth antialiasing; thin red band shows soft transition.</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</section>
 
-		<h3>How we rasterize triangles</h3>
-		<p>We compute the <b>bounding box</b> of the triangle (min/max of the vertices' \(x\) and \(y\)), clamp it to the screen, then for each pixel in that box test whether the <b>pixel center</b> \((x+0.5, y+0.5)\) lies inside the triangle. We use the <b>three-line edge function</b> from lecture: for each edge from \(A\) to \(B\), \(L = (B.x - A.x)(P.y - A.y) - (B.y - A.y)(P.x - A.x)\), with \(P\) the pixel center. The point is <b>inside</b> if all three \(L\) values have the <b>same sign</b>. We treat both all-positive and all-negative as inside to support <b>CW and CCW</b> winding, and use \(\geq\)/\(\leq\) so samples on edges are drawn. When the center is inside, we call <code>fill_pixel(x, y, color)</code>.</p>
+		<section>
+			<h2>Task 3: Transforms</h2>
+			<h3>Custom cubeman: <code>my_robot.svg</code></h3>
+			<p>I created an updated cubeman in <b><code>docs/my_robot.svg</code></b> that uses the <code>translate</code>, <code>scale</code>, and <code>rotate</code> transforms from <code>transforms.cpp</code> to pose the robot in a <b>ballet-style pose</b>: arms raised and curved above the head, legs spread with a slight bend at the knees.</p>
+			<h3>What I was trying to do</h3>
+			<p><b>Pose:</b> A ballet-inspired position: both arms are raised and curved so the forearms come together above the diamond head (like a frame or crown), and both legs are spread with a gentle bend at the knees and feet closer together than the hips, giving a symmetric, dance-like stance.</p>
+			<p><b>Hierarchy:</b> Each limb uses an upper and lower segment (thigh/upper arm and calf/forearm), with the lower segment positioned and rotated relative to the upper so the arms read as "raised and curved" and the legs as "spread with bent knees."</p>
+			<h3>Transforms used</h3>
+			<ul>
+				<li><b>Torso:</b> Centered with <code>translate(250 250)</code>; no rotation or scale.</li>
+				<li><b>Head:</b> <code>translate(0 -100)</code> to sit above the torso, then <code>rotate(45)</code> and <code>scale(0.5 0.5)</code> for the diamond.</li>
+				<li><b>Left leg:</b> <code>translate(-35 85)</code> for the hip; whole leg <code>rotate(-5)</code>. Upper leg <code>scale(0.2 0.6)</code>; lower leg <code>rotate(-15)</code> and <code>translate(-10 65)</code> (in the leg's local frame) then the same scale so the knee bends outward and the foot moves inward.</li>
+				<li><b>Right leg:</b> Mirror of the left: <code>translate(35 85)</code>, <code>rotate(5)</code>, and for the lower leg <code>rotate(15)</code> and <code>translate(10 65)</code>.</li>
+				<li><b>Left arm:</b> <code>translate(-70 -80)</code> at the shoulder; upper arm <code>rotate(65)</code> and <code>scale(0.6 0.2)</code>; forearm <code>translate(10 -65)</code> and <code>rotate(135)</code> (same scale) so the arm goes up and the forearm curves in above the head.</li>
+				<li><b>Right arm:</b> Mirror: <code>translate(70 -80)</code>, <code>rotate(-65)</code> on the upper arm, forearm <code>translate(-10 -65)</code> and <code>rotate(-135)</code> so both arms frame the head.</li>
+			</ul>
+			<p>All limb geometry uses the same two triangles, with only <b>translate</b>, <b>scale</b>, and <b>rotate</b> in the SVG <code>transform</code> attributes, matching the 3×3 homogeneous transforms in <code>transforms.cpp</code>. The screenshot was generated with the <b>S</b> hotkey in the assignment GUI.</p>
+			<h3>Screenshot</h3>
+			<figure>
+				<img src="images/task3_screenshot.png" alt="Cubeman in ballet pose from my_robot.svg"/>
+				<figcaption><b>my_robot.svg</b> rendered in the rasterizer: cubeman in a ballet-style pose with arms raised and curved above the head and legs spread with bent knees.</figcaption>
+			</figure>
+			<h3>Extra credit: Viewport rotation</h3>
+			<p>I added viewport rotation with two keys: <b><code>[</code></b> rotates the view left by 10° and <b><code>]</code></b> rotates it right by 10°. The current angle is shown in the status line (e.g. "View rotation 45 deg ([ ] keys)."). Pressing <b>Space</b> resets the view (including rotation).</p>
+			<p><b>Matrix stack:</b> The pipeline is SVG → NDC → screen. I left <code>svg_to_ndc</code> (centering and span) and <code>ndc_to_screen</code> (scale and offset to the window) unchanged. I inserted a rotation <b>in NDC</b> around the view center (0.5, 0.5): <code>R_ndc = translate(0.5, 0.5) * rotate(view_angle) * translate(-0.5, -0.5)</code>. The full transform used for drawing is <code>svg_to_screen = ndc_to_screen * R_ndc * svg_to_ndc[current_svg]</code>. So the stack is still SVG→NDC then NDC→screen; the only addition is the rotation in the middle. Rotating in NDC keeps the content spinning around the center of the viewport. The canvas outline (black square) is drawn with the same transform, so it rotates with the content.</p>
+			<figure>
+				<img src="images/task3_ec_screenshot.png" alt="Viewport rotated about 45° showing cubeman and canvas outline"/>
+				<figcaption><b>Viewport rotation.</b> Cubeman and canvas outline rotated ~45° using the <b>]</b> key. Screenshot taken with <b>S</b>.</figcaption>
+			</figure>
+		</section>
 
-		<h3>Bounding box efficiency</h3>
-		<p>We only iterate over pixels in the bounding box, so we never test pixels clearly outside the triangle. The cost is one point-in-triangle test per pixel in the box, and we never touch pixels outside it.</p>
+		<section>
+			<h2>Task 4: Barycentric coordinates</h2>
+			<h3>What are barycentric coordinates?</h3>
+			<p>For a triangle with vertices \(P_0\), \(P_1\), \(P_2\), the <b>barycentric coordinates</b> of a point \(P\) are three weights \((\alpha, \beta, \gamma)\) such that \(P = \alpha P_0 + \beta P_1 + \gamma P_2\) with \(\alpha + \beta + \gamma = 1\). So \(P\) is a weighted average of the three vertices: \(\alpha\) is "how much of \(P_0\)", \(\beta\) "how much of \(P_1\)", \(\gamma\) "how much of \(P_2\)". \(P\) is <b>inside</b> the triangle (including edges) exactly when \(\alpha, \beta, \gamma \ge 0\). On an edge one weight is 0; at a vertex one weight is 1 and the others 0.</p>
+			<p>We can get \((\alpha, \beta, \gamma)\) from <b>signed areas</b>: if \(A\) is the triangle's area, then \(\alpha = \text{area}(P, P_1, P_2) / A\), \(\beta = \text{area}(P_0, P, P_2) / A\), \(\gamma = \text{area}(P_0, P_1, P) / A\). The same edge functions we use for point-in-triangle tests (e.g. \(L_0, L_1, L_2\)) are proportional to these areas, so we compute \(\alpha = L_1 / (2A)\), \(\beta = L_2 / (2A)\), \(\gamma = L_0 / (2A)\) with \(2A = (x_1 - x_0)(y_2 - y_0) - (y_1 - y_0)(x_2 - x_0)\). That gives us barycentrics at each sample at no extra cost.</p>
+			<h3>Using them to interpolate color</h3>
+			<p>If the vertices have colors \(c_0, c_1, c_2\), we assign the pixel the <b>interpolated color</b> \(c = \alpha c_0 + \beta c_1 + \gamma c_2\). So color changes smoothly across the triangle: e.g. red at one vertex, green at another, blue at the third will blend through yellow, cyan, magenta, etc., in between. A single triangle with one red, one green, and one blue vertex (and the rest of the scene white) is a good image to illustrate barycentric interpolation.</p>
+			<h3>Implementation</h3>
+			<p>We reuse the same pipeline as the single-color triangle: bounding box, edge functions \(L_0, L_1, L_2\) per sample, and the same inside test. For each sample inside the triangle we compute \(\alpha, \beta, \gamma\) as above, then set the sample color to \(\alpha c_0 + \beta c_1 + \gamma c_2\). Degenerate triangles (\(2A = 0\)) are skipped.</p>
+			<h3>Screenshot</h3>
+			<figure>
+				<img src="images/task4_test7.png" alt="Color wheel from svg/basic/test7.svg with default view, sample rate 1"/>
+				<figcaption><b>svg/basic/test7.svg</b> with default viewing parameters and sample rate 1. The color wheel is made of triangles with a black center and colored perimeter; barycentric interpolation blends vertex colors across each triangle so the result is a smooth radial gradient. Screenshot taken with the <b>S</b> key.</figcaption>
+			</figure>
+		</section>
 
-		<h3>Picture 1.1</h3>
-		<figure style="text-align: center;">
-			<img src="images/task1_screenshot.png" alt="basic/test4.svg with pixel inspector on thin magenta strip" style="max-width: 100%; height: auto;"/>
-			<figcaption><b>basic/test4.svg</b> with default view and the pixel inspector over the thin magenta strip. The magnified inset shows <b>two disconnected magenta segments</b> with a gap between them. At <b>1 sample per pixel</b>, the strip is thinner than a pixel in places, so some pixel centers miss it and those pixels stay white — a clear example of <b>aliasing</b> on narrow geometry.</figcaption>
-		</figure>
+		<section>
+			<h2>Task 5: "Pixel sampling" for texture mapping</h2>
+			<h3>What is pixel sampling?</h3>
+			<p>We have a texture (a 2D image) and a sample point in texture space given by <b>(u, v)</b> in \([0,1]\). <b>Pixel sampling</b> is the process of turning that (u, v) into an RGB color by looking up the texture's texels. The "pixel sampling method" is how we do that lookup.</p>
+			<h3>Two methods</h3>
+			<p><b>Nearest-neighbor (P_NEAREST):</b> Map (u, v) to texel coordinates and round (or floor) to the nearest integer texel; return that single texel's color. No blending, so the sample is always exactly one texel. Fast but can look blocky when the texture is magnified or when (u, v) doesn't align with texel centers.</p>
+			<p><b>Bilinear (P_LINEAR):</b> Map (u, v) to continuous texel space (e.g. \(u\cdot\text{width}-0.5\), \(v\cdot\text{height}-0.5\) so sampling is consistent with texel centers). Take the four texels that surround that point and interpolate: first horizontally between the two bottom texels and the two top texels using the fractional part in \(u\), then vertically using the fractional part in \(v\) (or equivalently a weighted average of the four texels). This produces a smooth blend between neighboring texels and reduces blockiness when the texture is zoomed or viewed at an angle.</p>
+			<h3>Implementation</h3>
+			<p><b>Texture::sample_nearest(uv, level):</b> Convert uv to texel indices with \(\lfloor u\cdot\text{width}\rfloor\) and \(\lfloor v\cdot\text{height}\rfloor\), clamp to texture bounds, return <code>get_texel(tx, ty)</code>.</p>
+			<p><b>Texture::sample_bilinear(uv, level):</b> Map uv to continuous texel coordinates; identify the four surrounding texels, clamp their coordinates to the texture; bilinearly interpolate their colors using the fractional parts.</p>
+			<p><b>RasterizerImp::rasterize_textured_triangle:</b> Same pipeline as the interpolated-color triangle (bounding box, edge tests, supersampling). For each sample inside the triangle we compute barycentric \((\alpha, \beta, \gamma)\), interpolate \(u = \alpha u_0 + \beta u_1 + \gamma u_2\) and \(v = \alpha v_0 + \beta v_1 + \gamma v_2\), then sample the texture at level 0 using the current <b>PixelSampleMethod</b> (P key): <code>sample_nearest</code> or <code>sample_bilinear</code>.</p>
+			<h3>Four-way comparison (svg/texmap)</h3>
+			<p>All four screenshots use the same textured scene (e.g. world map from <code>svg/texmap/</code>), with the pixel inspector over a region where the difference is clear (e.g. coastlines or grid lines). Screenshots taken with the <b>S</b> key.</p>
+			<div class="table-wrap">
+				<table class="comparison-table">
+					<tr>
+						<td>
+							<img src="images/task5_nearest1.png" alt="Nearest, 1 sample/pixel"/>
+							<figcaption><b>Nearest, rate 1.</b> Blocky texture and jagged edges.</figcaption>
+						</td>
+						<td>
+							<img src="images/task5_bilinear1.png" alt="Bilinear, 1 sample/pixel"/>
+							<figcaption><b>Bilinear, rate 1.</b> Smoother texture; edges still aliased.</figcaption>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<img src="images/task5_nearest16.png" alt="Nearest, 16 samples/pixel"/>
+							<figcaption><b>Nearest, rate 16.</b> Smoother edges; texture still pixelated.</figcaption>
+						</td>
+						<td>
+							<img src="images/task5_bilinear16.png" alt="Bilinear, 16 samples/pixel"/>
+							<figcaption><b>Bilinear, rate 16.</b> Smoothest: smooth texture and edges.</figcaption>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<p><b>When do the two methods differ a lot?</b> When the texture is <b>magnified</b> (one texel covers many screen pixels) or when (u, v) varies smoothly across texel boundaries, nearest gives visible blocks and jagged transitions while bilinear gives gradual blends. At <b>diagonal or curved boundaries</b> in the texture (e.g. coastlines, grid lines), nearest keeps hard steps; bilinear softens them. When the texture is <b>minified</b> or viewed from far away, both can look similar; supersampling (rate 16) mainly improves <b>geometric</b> edges; it doesn't change the texture's look, so the blockiness of nearest vs the smoothness of bilinear is visible at both rates.</p>
+		</section>
 
-		<h3>Extra credit: Optimizations</h3>
-		<p>Beyond the basic bounding box, I added two optimizations and timed them with <code>clock()</code> around <code>svg.draw()</code> in <code>DrawRend::redraw()</code>, on <code>illustration/05_lion.svg</code> at 2000×2000 in headless mode (best of 3 runs).</p>
-		<div style="overflow-x: auto;">
-			<table style="width: 100%; text-align: left; border-collapse: collapse;">
-			  <tr style="border-bottom: 1px solid #ccc;">
-				<th style="padding: 6px;">Version</th>
-				<th style="padding: 6px;">Time (ms)</th>
-				<th style="padding: 6px;">Speedup</th>
-				<th style="padding: 6px;">Description</th>
-			  </tr>
-			  <tr style="border-bottom: 1px solid #eee;">
-				<td style="padding: 6px;">Baseline</td>
-				<td style="padding: 6px;">~4.3 ms</td>
-				<td style="padding: 6px;">1.0x</td>
-				<td style="padding: 6px;">Bounding box with per-pixel edge function evaluation.</td>
-			  </tr>
-			  <tr style="border-bottom: 1px solid #eee;">
-				<td style="padding: 6px;">+ Incremental edge functions</td>
-				<td style="padding: 6px;">~4.3 ms</td>
-				<td style="padding: 6px;">~1.0x</td>
-				<td style="padding: 6px;">Precompute edge coefficients and step edge values by constants when moving between pixels (compiler likely did similar).</td>
-			  </tr>
-			  <tr style="border-bottom: 1px solid #eee;">
-				<td style="padding: 6px;">+ Early exit on convex break</td>
-				<td style="padding: 6px;">~3.1 ms</td>
-				<td style="padding: 6px;">~1.4x</td>
-				<td style="padding: 6px;">Once we leave the triangle while scanning down a column, we break; skips ~50% of empty bbox pixels for typical triangles.</td>
-			  </tr>
-			</table>
-		</div>
+		<section>
+			<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
+			<h3>What is level sampling?</h3>
+			<p>When a texture is <b>minified</b>—many texels map to one screen pixel—sampling only from the full-resolution level causes aliasing: high-frequency detail in the texture gets folded into wrong frequencies and we see moiré, shimmer, or noisy pixels. <b>Level sampling</b> (with mipmaps) addresses this by precomputing a pyramid of downsampled texture levels (level 0 = full res, level 1 = half, etc.). For each pixel we estimate <em>which</em> mip level best matches the texel footprint (how much of the texture one pixel "sees"), then sample from that level (or blend between two levels). That way we average many texels in a single lookup instead of point-sampling the full-res texture, which reduces minification aliasing.</p>
+			<h3>Implementation</h3>
+			<p><b>Barycentric differentials (rasterizer):</b> In <code>rasterize_textured_triangle</code>, for each sample we have barycentric \((\alpha, \beta, \gamma)\) and interpolated \((u, v)\). The derivatives of \(\alpha, \beta, \gamma\) with respect to screen \(x\) and \(y\) come from the edge vectors and triangle area (e.g. \(\partial\alpha/\partial x = -\mathrm{dy}_1/\mathrm{area2}\)). We compute \(\partial u/\partial x\), \(\partial v/\partial x\), \(\partial u/\partial y\), \(\partial v/\partial y\) from those and the vertex UVs, then set <code>SampleParams</code>: <code>p_uv</code> at the sample, <code>p_dx_uv</code> = uv at \((x+1,y)\), <code>p_dy_uv</code> = uv at \((x,y+1)\), plus <code>psm</code> and <code>lsm</code>. We call <code>tex.sample(sp)</code> instead of sampling at level 0 directly.</p>
+			<p><b>Texture::get_level(sp):</b> From <code>p_dx_uv - p_uv</code> and <code>p_dy_uv - p_uv</code> we get the rate of change of uv per pixel. Scaling by texture width/height gives the footprint in texel space. We take the length of each footprint vector and set \(L = \max(\text{length}_x, \text{length}_y)\). The continuous mip level is \(D = \log_2(L)\), clamped to \([0, \text{numLevels}-1]\). If \(L \le 1\) we use level 0.</p>
+			<p><b>Texture::sample(sp):</b> We compute <code>level = get_level(sp)</code>. For <b>L_ZERO</b> we always sample level 0 with the current pixel sampling method (nearest or bilinear). For <b>L_NEAREST</b> we round <code>level</code> to an integer, clamp it, and sample that mip level. For <b>L_LINEAR</b> we sample at \(\lfloor \text{level} \rfloor\) and \(\lceil \text{level} \rceil\) and blend the two colors by the fractional part of <code>level</code> (trilinear interpolation).</p>
+			<h3>Tradeoffs: speed, memory, antialiasing</h3>
+			<p><b>Pixel sampling (P_NEAREST vs P_LINEAR):</b> Nearest is faster (one texel lookup) and uses no extra memory; bilinear does four lookups and interpolation, so slightly more cost. Bilinear gives smoother texture when magnified and softer edges; nearest looks blocky. For minification, pixel sampling alone doesn't fix aliasing—level sampling is what matters.</p>
+			<p><b>Level sampling (L_ZERO vs L_NEAREST vs L_LINEAR):</b> L_ZERO is fastest (always level 0) but aliases badly when minified. L_NEAREST uses the mip pyramid (one level per pixel) and reduces aliasing; L_LINEAR adds trilinear blending between levels for smoother transitions. L_LINEAR is a bit more expensive (two level samples, then blend) but gives the best antialiasing for textures at a distance.</p>
+			<p><b>Samples per pixel (1 vs 4 vs 16):</b> More samples per pixel improve <em>geometric</em> antialiasing (triangle edges, not texture minification). Cost grows linearly with sample rate (memory and shading); quality improves with diminishing returns. Level sampling addresses texture aliasing; supersampling addresses edge aliasing.</p>
+			<h3>Extra credit: Anisotropic filtering</h3>
+			<p>I implemented <b>anisotropic filtering</b> as an extra level-sampling mode (L key cycles to "anisotropic"). Standard mipmapping assumes a roughly square texel footprint; when the footprint is <em>elongated</em> (e.g. a floor or a surface viewed at a steep angle), isotropic filtering picks a level by the <em>max</em> of the two axes and blurs too much along the short axis, losing detail. Anisotropic filtering takes multiple samples along the <em>major</em> axis of the footprint and averages them, so we keep sharpness along the short axis while still averaging along the long axis.</p>
+			<p><b>Implementation:</b> In <code>Texture::sample()</code> when <code>lsm == L_ANISO</code>, I compute the footprint lengths \(L_x\) and \(L_y\) in texel space (same as in <code>get_level</code>). The anisotropy ratio is \(r = L_{\max} / L_{\min}\) (capped at 8). I take \(n = \lceil r \rceil\) samples along the longer of the two footprint directions in UV space, centered at <code>p_uv</code>, each sample with trilinear filtering at level \(\log_2(L_{\max})\), then average the \(n\) colors. UV offsets are clamped to \([0,1]\) so we stay on the texture.</p>
+			<p><b>Comparison with other methods:</b> Anisotropic uses the mip pyramid and multiple samples, removing minification aliasing and reducing blur on angled surfaces (vs L_ZERO/nearest). It chooses the right blur and direction so angled regions look sharper than bilinear alone. Vs trilinear (L_LINEAR), which treats the footprint as isotropic, anisotropic preserves more detail along the "narrow" direction on oblique views; trilinear tends to blur uniformly.</p>
+			<h3>Full comparison: all level × pixel combinations with timings</h3>
+			<p>I used a custom PNG (Happy Birthday–style texture) and <code>svg/texmap/task_6.svg</code>. All screenshots use the same scene with the pixel inspector; taken with the <b>S</b> key. Relative performance was measured with <code>clock()</code> around <code>svg.draw()</code> (one redraw per combination). Same resolution and supersample rate for all.</p>
+			<div class="table-wrap">
+				<table>
+					<thead>
+						<tr>
+							<th>Level sampling</th>
+							<th>P_NEAREST (nearest pixel)</th>
+							<th>P_LINEAR (bilinear pixel)</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><b>L_ZERO</b><br><small>level 0 only</small></td>
+							<td>
+								<img src="images/task6_lzero_pnearest.png" alt="L_ZERO, P_NEAREST"/>
+								<figcaption>No mipmapping; nearest texel. Blocky and aliased.</figcaption>
+								<p><b>Time: 8.62 ms</b></p>
+							</td>
+							<td>
+								<img src="images/task6_lzero_plinear.png" alt="L_ZERO, P_LINEAR"/>
+								<figcaption>No mipmapping; bilinear within level 0.</figcaption>
+								<p><b>Time: 11.92 ms</b></p>
+							</td>
+						</tr>
+						<tr>
+							<td><b>L_NEAREST</b><br><small>nearest mip level</small></td>
+							<td>
+								<img src="images/task6_lnearest_pnearest.png" alt="L_NEAREST, P_NEAREST"/>
+								<figcaption>Mip level per pixel; nearest texel. Less aliasing than L_ZERO.</figcaption>
+								<p><b>Time: 5.73 ms</b></p>
+							</td>
+							<td>
+								<img src="images/task6_lnearest_plinear.png" alt="L_NEAREST, P_LINEAR"/>
+								<figcaption>Mip level per pixel; bilinear. Good antialiasing, smooth texture.</figcaption>
+								<p><b>Time: 9.37 ms</b></p>
+							</td>
+						</tr>
+						<tr>
+							<td><b>L_LINEAR</b><br><small>trilinear</small></td>
+							<td>
+								<img src="images/task6_ec_llinear_pnearest.png" alt="L_LINEAR, P_NEAREST"/>
+								<figcaption>Trilinear level; nearest texel. Smooth level transitions.</figcaption>
+								<p><b>Time: 6.89 ms</b></p>
+							</td>
+							<td>
+								<img src="images/task6_ec_llinear_plinear.png" alt="L_LINEAR, P_LINEAR"/>
+								<figcaption>Trilinear + bilinear (full trilinear filtering). Smoothest isotropic.</figcaption>
+								<p><b>Time: 17.69 ms</b></p>
+							</td>
+						</tr>
+						<tr>
+							<td><b>L_ANISO</b><br><small>anisotropic (EC)</small></td>
+							<td>
+								<img src="images/task6_ec_aniso_pnearest.png" alt="L_ANISO, P_NEAREST"/>
+								<figcaption>Anisotropic level; nearest texel. Crisper on angled surfaces.</figcaption>
+								<p><b>Time: 11.85 ms</b></p>
+							</td>
+							<td>
+								<img src="images/task6_ec_aniso_plinear.png" alt="L_ANISO, P_LINEAR"/>
+								<figcaption>Anisotropic + bilinear. Best detail on warped/angled regions.</figcaption>
+								<p><b>Time: 24.24 ms</b></p>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<p><b>Performance summary:</b> Fastest is L_NEAREST + P_NEAREST (5.73 ms). L_ZERO is simple but aliases. Adding bilinear pixel (P_LINEAR) costs roughly 2–4 ms per combination. Trilinear (L_LINEAR) adds level blending: P_NEAREST 6.89 ms, P_LINEAR 17.69 ms. Anisotropic (L_ANISO) does up to 8 trilinear samples per pixel on elongated footprints: 11.85 ms with P_NEAREST and 24.24 ms with P_LINEAR—the slowest but best quality on angled surfaces. So anisotropic is about 1.4× the cost of trilinear when both use P_LINEAR.</p>
+		</section>
 
-		<h3>The Big Picture</h3>
-		<p>Imagine a triangle on graph paper: you only need to decide which squares to color.</p>
-		<p><b>Step 1: Don't check the whole page.</b> Only the <b>tightest axis-aligned rectangle</b> around the triangle (the <b>bounding box</b>) can contain covered pixels, so we only consider squares inside it.</p>
-		<p><b>Step 2: Check each square's center.</b> For each square in the box we ask: is its <b>center</b> \((x+0.5, y+0.5)\) inside the triangle? The center is the single sample that represents the pixel.</p>
-		<p><b>Step 3: The three-line test.</b> Each edge splits the plane in two. A point is inside only if it's on the <b>same side of all three edges</b> (like being inside a room: interior side of every wall). The edge function gives a sign per edge; same sign for all three → inside (sign depends on CW/CCW); mixed signs → outside.</p>
-		<p><b>The optimization trick.</b> The edge function is <b>linear</b> in position, so moving one pixel changes it by a constant. We compute it once per row/column and <b>update by addition</b> instead of recomputing. Because the triangle is <b>convex</b>, once we leave it along a column we don't re-enter, so we <b>break early</b> and skip the rest of that column.</p>
-		<p>In short: bounding box, center test, three-line check, plus incremental edge updates and early exit for speed.</p>
+		<section>
+			<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
+			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+		</section>
 
-		<h2>Task 2: Antialiasing by Supersampling</h2>
-
-		<h3>How we do supersampling</h3>
-		<p>We treat each pixel as a small grid of sample points. The sample rate \(n\) (1, 4, 9, or 16) gives a \(\sqrt{n} \times \sqrt{n}\) grid per pixel. We rasterize at this higher effective resolution into a <b>sample buffer</b>, then <b>downsample</b> to the screen by averaging the samples in each pixel.</p>
-		<p><b>Sample buffer:</b> One 1D vector of <code>Color</code> with <code>width * height * sample_rate</code> entries. For pixel \((x, y)\), the samples live at indices \((y \cdot \text{width} + x) \cdot \text{sample\_rate} + s\) for \(s = 0, \ldots, \text{sample\_rate} - 1\). Subsample index \(s\) maps to grid cell \((i, j)\) with \(i = s \bmod \sqrt{n}\), \(j = s / \sqrt{n}\). Sample positions use the <b>center of each sub-cell</b>: \(\text{sample\_x} = x + (i + 0.5) / \sqrt{n}\), \(\text{sample\_y} = y + (j + 0.5) / \sqrt{n}\).</p>
-		<p><b>Triangle rasterization:</b> For each pixel in the triangle's bounding box we loop over all subsamples. For each subsample we run the <b>same three-line edge function</b> as in Task 1 at that sample's \((x, y)\). If the sample is inside the triangle we write the triangle color to that sample's slot in the buffer. Points and lines are not supersampled: <code>fill_pixel</code> fills <b>all</b> subsamples of the pixel with the same color so they still show up after resolve.</p>
-		<p><b>Resolve:</b> After all primitives are drawn, <code>resolve_to_framebuffer</code> runs. For each pixel it averages the R, G, and B of all <code>sample_rate</code> samples and writes the result to the final framebuffer (with clamping to \([0, 255]\)).</p>
-
-		<h3>Why supersampling helps</h3>
-		<p>With one sample per pixel at the center, coverage is binary (inside or outside), so edges look jagged (aliasing). With multiple samples per pixel, edge pixels get a mix of triangle and background; averaging gives <b>fractional coverage</b> and smoother edges without checking more pixels than we already do in the bounding box.</p>
-
-		<h3>Pipeline changes</h3>
-		<ul>
-			<li><code>set_sample_rate</code> and <code>set_framebuffer_target</code> resize the sample buffer to <code>width * height * sample_rate</code>.</li>
-			<li><code>fill_pixel(x, y, c)</code> writes \(c\) to <b>all</b> <code>sample_rate</code> entries for pixel \((x, y)\) so points and lines still draw correctly.</li>
-			<li><code>rasterize_triangle</code> tests <b>each subsample</b> with the edge functions and only fills the samples that are inside the triangle.</li>
-			<li><code>resolve_to_framebuffer</code> no longer reads a single sample per pixel; it <b>averages</b> all subsamples for that pixel and writes the result.</li>
-		</ul>
-
-		<h3>Screenshots: sample rates 1, 4, and 16</h3>
-		<p>basic/test4.svg with default view; pixel inspector over an edge to show the effect of supersampling.</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center; padding: 8px;">
-				  <img src="images/task2_rate1.png" alt="Supersample rate 1" style="max-width: 100%; height: auto;"/>
-				  <figcaption><b>Sample rate 1.</b> Edges are jagged; each pixel is either fully filled or fully background.</figcaption>
-				</td>
-				<td style="text-align: center; padding: 8px;">
-				  <img src="images/task2_rate4.png" alt="Supersample rate 4" style="max-width: 100%; height: auto;"/>
-				  <figcaption><b>Sample rate 4 (2×2 grid).</b> Edge pixels get partial coverage; the grid shows varying intensity from sub-pixel coverage.</figcaption>
-				</td>
-				<td style="text-align: center; padding: 8px;">
-				  <img src="images/task2_rate16.png" alt="Supersample rate 16" style="max-width: 100%; height: auto;"/>
-				  <figcaption><b>Sample rate 16 (4×4 grid).</b> Edges are noticeably smoother; the magnified grid shows a soft gradient along the edge.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
-		<p><b>Why these results:</b> At rate 1, one sample per pixel gives binary coverage and stair-stepped edges. At 4 and 16, edge pixels contain both inside and outside samples; averaging gives in-between shades, so edges look smoother. Higher sample rate improves smoothness at the cost of more memory and work per pixel.</p>
-
-		<h3>The Big Picture</h3>
-		<p>Think of drawing the scene on a <b>finer grid</b> (e.g. 4× or 16× more cells per pixel), then <b>averaging</b> each block of cells down to one pixel. That "higher-res then average" is supersampling: we only do the point-in-triangle test at those finer positions and then blend the results. We still only touch pixels in the triangle's bounding box; we just take several samples per pixel and combine them so edges are antialiased instead of jagged.</p>
-
-		<h3>Extra credit: Jittered supersampling</h3>
-		<p>I implemented <b>jittered supersampling</b> as an alternative to the default <b>grid</b> supersampling. Toggle between them with the <b>J</b> key; the status line shows "Grid supersampling." or "Jittered supersampling." so you know which mode is active when saving screenshots.</p>
-		<p><b>How jittered sampling works:</b> In <b>grid</b> supersampling, the \(n\) samples per pixel sit on a fixed \(\sqrt{n}\times\sqrt{n}\) grid (e.g. sub-cell centers \((i+0.5, j+0.5)\) in normalized coordinates). In <b>jittered</b> sampling, each sample is offset by a small amount <b>within</b> its sub-cell so the pattern is no longer a regular grid. Concretely, for pixel \((x,y)\) and subsample index \(s\) (sub-cell \((i,j)\)), we use \(\text{sample\_x} = x + (i + 0.5 + \text{jitter\_x})/\sqrt{n}\) (and similarly for \(y\)), where \(\text{jitter\_x}, \text{jitter\_y} \in [-0.5, 0.5]\) come from a <b>deterministic hash</b> of \((x, y, s)\) (e.g. \(\sin(x\cdot 127.1 + y\cdot 311.7 + s\cdot 74.7)\) mapped to \([-0.5, 0.5]\)). That keeps the same scene rendering the same every time. The rest of the pipeline is unchanged: point-in-triangle at each sample, write to the sample buffer, resolve by averaging.</p>
-		<p><b>Why jittered can look better:</b> A regular grid aligns samples across pixels, which can reinforce certain aliasing (e.g. stair-stepping or Moiré). Jittering breaks that alignment so the same edge hits different relative positions in different pixels; after averaging, edges often look smoother and thin features can show fewer artifacts than with grid at the same sample count.</p>
-		<p><b>Comparison:</b> Below are three screenshots with <b>Jittered</b> supersampling at sample rates <b>1</b>, <b>4</b>, and <b>16</b> (same scene as above). At rate 1, jittered still shows strong aliasing (one sample per pixel). At 4 and 16, the pixel inspector shows smoother gradients along edges and the thin red line; for a direct grid-vs-jittered comparison, render the same view with Grid and Jittered at the same rate (e.g. 4 or 16) and place the two side by side. All screenshots were taken with the <b>S</b> key.</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center; padding: 8px;">
-				  <img src="images/task2_ec_jitter1.png" alt="Jittered, rate 1" style="max-width: 100%; height: auto;"/>
-				  <figcaption><b>Jittered, 1 sample/pixel.</b> Aliasing; same as grid at rate 1.</figcaption>
-				</td>
-				<td style="text-align: center; padding: 8px;">
-				  <img src="images/task2_ec_jitter4.png" alt="Jittered, rate 4" style="max-width: 100%; height: auto;"/>
-				  <figcaption><b>Jittered, 4 samples/pixel.</b> Smoother edges; gradient in magnified grid.</figcaption>
-				</td>
-				<td style="text-align: center; padding: 8px;">
-				  <img src="images/task2_ec_jitter16.png" alt="Jittered, rate 16" style="max-width: 100%; height: auto;"/>
-				  <figcaption><b>Jittered, 16 samples/pixel.</b> Smooth antialiasing; thin red band shows soft transition.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
-
-		<h2>Task 3: Transforms</h2>
-
-		<h3>Custom cubeman: <code>my_robot.svg</code></h3>
-		<p>I created an updated cubeman in <b><code>docs/my_robot.svg</code></b> that uses the <code>translate</code>, <code>scale</code>, and <code>rotate</code> transforms from <code>transforms.cpp</code> to pose the robot in a <b>ballet-style pose</b>: arms raised and curved above the head, legs spread with a slight bend at the knees.</p>
-
-		<h3>What I was trying to do</h3>
-		<p><b>Pose:</b> A ballet-inspired position: both arms are raised and curved so the forearms come together above the diamond head (like a frame or crown), and both legs are spread with a gentle bend at the knees and feet closer together than the hips, giving a symmetric, dance-like stance.</p>
-		<p><b>Hierarchy:</b> Each limb uses an upper and lower segment (thigh/upper arm and calf/forearm), with the lower segment positioned and rotated relative to the upper so the arms read as “raised and curved” and the legs as “spread with bent knees.”</p>
-
-		<h3>Transforms used</h3>
-		<ul>
-			<li><b>Torso:</b> Centered with <code>translate(250 250)</code>; no rotation or scale.</li>
-			<li><b>Head:</b> <code>translate(0 -100)</code> to sit above the torso, then <code>rotate(45)</code> and <code>scale(0.5 0.5)</code> for the diamond.</li>
-			<li><b>Left leg:</b> <code>translate(-35 85)</code> for the hip; whole leg <code>rotate(-5)</code>. Upper leg <code>scale(0.2 0.6)</code>; lower leg <code>rotate(-15)</code> and <code>translate(-10 65)</code> (in the leg’s local frame) then the same scale so the knee bends outward and the foot moves inward.</li>
-			<li><b>Right leg:</b> Mirror of the left: <code>translate(35 85)</code>, <code>rotate(5)</code>, and for the lower leg <code>rotate(15)</code> and <code>translate(10 65)</code>.</li>
-			<li><b>Left arm:</b> <code>translate(-70 -80)</code> at the shoulder; upper arm <code>rotate(65)</code> and <code>scale(0.6 0.2)</code>; forearm <code>translate(10 -65)</code> and <code>rotate(135)</code> (same scale) so the arm goes up and the forearm curves in above the head.</li>
-			<li><b>Right arm:</b> Mirror: <code>translate(70 -80)</code>, <code>rotate(-65)</code> on the upper arm, forearm <code>translate(-10 -65)</code> and <code>rotate(-135)</code> so both arms frame the head.</li>
-		</ul>
-		<p>All limb geometry uses the same two triangles, with only <b>translate</b>, <b>scale</b>, and <b>rotate</b> in the SVG <code>transform</code> attributes, matching the 3×3 homogeneous transforms in <code>transforms.cpp</code>. The screenshot was generated with the <b>S</b> hotkey in the assignment GUI.</p>
-
-		<h3>Screenshot</h3>
-		<figure style="text-align: center;">
-			<img src="images/task3_screenshot.png" alt="Cubeman in ballet pose from my_robot.svg" style="max-width: 100%; height: auto;"/>
-			<figcaption><b>my_robot.svg</b> rendered in the rasterizer: cubeman in a ballet-style pose with arms raised and curved above the head and legs spread with bent knees.</figcaption>
-		</figure>
-
-		<h3>Extra credit: Viewport rotation</h3>
-		<p>I added viewport rotation with two keys: <b><code>[</code></b> rotates the view left by 10° and <b><code>]</code></b> rotates it right by 10°. The current angle is shown in the status line (e.g. “View rotation 45 deg ([ ] keys).”). Pressing <b>Space</b> resets the view (including rotation).</p>
-		<p><b>Matrix stack:</b> The pipeline is SVG → NDC → screen. I left <code>svg_to_ndc</code> (centering and span) and <code>ndc_to_screen</code> (scale and offset to the window) unchanged. I inserted a rotation <b>in NDC</b> around the view center (0.5, 0.5): <code>R_ndc = translate(0.5, 0.5) * rotate(view_angle) * translate(-0.5, -0.5)</code>. The full transform used for drawing is <code>svg_to_screen = ndc_to_screen * R_ndc * svg_to_ndc[current_svg]</code>. So the stack is still SVG→NDC then NDC→screen; the only addition is the rotation in the middle. Rotating in NDC keeps the content spinning around the center of the viewport. The canvas outline (black square) is drawn with the same transform, so it rotates with the content.</p>
-		<figure style="text-align: center;">
-			<img src="images/task3_ec_screenshot.png" alt="Viewport rotated about 45° showing cubeman and canvas outline" style="max-width: 100%; height: auto;"/>
-			<figcaption><b>Viewport rotation.</b> Cubeman and canvas outline rotated ~45° using the <b>]</b> key. Screenshot taken with <b>S</b>.</figcaption>
-		</figure>
-
-		<h2>Task 4: Barycentric coordinates</h2>
-
-		<h3>What are barycentric coordinates?</h3>
-		<p>For a triangle with vertices \(P_0\), \(P_1\), \(P_2\), the <b>barycentric coordinates</b> of a point \(P\) are three weights \((\alpha, \beta, \gamma)\) such that \(P = \alpha P_0 + \beta P_1 + \gamma P_2\) with \(\alpha + \beta + \gamma = 1\). So \(P\) is a weighted average of the three vertices: \(\alpha\) is “how much of \(P_0\)”, \(\beta\) “how much of \(P_1\)”, \(\gamma\) “how much of \(P_2\)”. \(P\) is <b>inside</b> the triangle (including edges) exactly when \(\alpha, \beta, \gamma \ge 0\). On an edge one weight is 0; at a vertex one weight is 1 and the others 0.</p>
-		<p>We can get \((\alpha, \beta, \gamma)\) from <b>signed areas</b>: if \(A\) is the triangle’s area, then \(\alpha = \text{area}(P, P_1, P_2) / A\), \(\beta = \text{area}(P_0, P, P_2) / A\), \(\gamma = \text{area}(P_0, P_1, P) / A\). The same edge functions we use for point-in-triangle tests (e.g. \(L_0, L_1, L_2\)) are proportional to these areas, so we compute \(\alpha = L_1 / (2A)\), \(\beta = L_2 / (2A)\), \(\gamma = L_0 / (2A)\) with \(2A = (x_1 - x_0)(y_2 - y_0) - (y_1 - y_0)(x_2 - x_0)\). That gives us barycentrics at each sample at no extra cost.</p>
-
-		<h3>Using them to interpolate color</h3>
-		<p>If the vertices have colors \(c_0, c_1, c_2\), we assign the pixel the <b>interpolated color</b> \(c = \alpha c_0 + \beta c_1 + \gamma c_2\). So color changes smoothly across the triangle: e.g. red at one vertex, green at another, blue at the third will blend through yellow, cyan, magenta, etc., in between. A single triangle with one red, one green, and one blue vertex (and the rest of the scene white) is a good image to illustrate barycentric interpolation.</p>
-
-		<h3>Implementation</h3>
-		<p>We reuse the same pipeline as the single-color triangle: bounding box, edge functions \(L_0, L_1, L_2\) per sample, and the same inside test. For each sample inside the triangle we compute \(\alpha, \beta, \gamma\) as above, then set the sample color to \(\alpha c_0 + \beta c_1 + \gamma c_2\). Degenerate triangles (\(2A = 0\)) are skipped.</p>
-
-		<h3>Screenshot</h3>
-		<figure style="text-align: center;">
-			<img src="images/task4_test7.png" alt="Color wheel from svg/basic/test7.svg with default view, sample rate 1" style="max-width: 100%; height: auto;"/>
-			<figcaption><b>svg/basic/test7.svg</b> with default viewing parameters and sample rate 1. The color wheel is made of triangles with a black center and colored perimeter; barycentric interpolation blends vertex colors across each triangle so the result is a smooth radial gradient. Screenshot taken with the <b>S</b> key.</figcaption>
-		</figure>
-
-		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
-
-		<h3>What is pixel sampling?</h3>
-		<p>We have a texture (a 2D image) and a sample point in texture space given by <b>(u, v)</b> in \([0,1]\). <b>Pixel sampling</b> is the process of turning that (u, v) into an RGB color by looking up the texture’s texels. The “pixel sampling method” is how we do that lookup.</p>
-
-		<h3>Two methods</h3>
-		<p><b>Nearest-neighbor (P_NEAREST):</b> Map (u, v) to texel coordinates and round (or floor) to the nearest integer texel; return that single texel’s color. No blending, so the sample is always exactly one texel. Fast but can look blocky when the texture is magnified or when (u, v) doesn’t align with texel centers.</p>
-		<p><b>Bilinear (P_LINEAR):</b> Map (u, v) to continuous texel space (e.g. \(u\cdot\text{width}-0.5\), \(v\cdot\text{height}-0.5\) so sampling is consistent with texel centers). Take the four texels that surround that point and interpolate: first horizontally between the two bottom texels and the two top texels using the fractional part in \(u\), then vertically using the fractional part in \(v\) (or equivalently a weighted average of the four texels). This produces a smooth blend between neighboring texels and reduces blockiness when the texture is zoomed or viewed at an angle.</p>
-
-		<h3>Implementation</h3>
-		<p><b>Texture::sample_nearest(uv, level):</b> Convert uv to texel indices with \(\lfloor u\cdot\text{width}\rfloor\) and \(\lfloor v\cdot\text{height}\rfloor\), clamp to texture bounds, return <code>get_texel(tx, ty)</code>.</p>
-		<p><b>Texture::sample_bilinear(uv, level):</b> Map uv to continuous texel coordinates; identify the four surrounding texels, clamp their coordinates to the texture; bilinearly interpolate their colors using the fractional parts.</p>
-		<p><b>RasterizerImp::rasterize_textured_triangle:</b> Same pipeline as the interpolated-color triangle (bounding box, edge tests, supersampling). For each sample inside the triangle we compute barycentric \((\alpha, \beta, \gamma)\), interpolate \(u = \alpha u_0 + \beta u_1 + \gamma u_2\) and \(v = \alpha v_0 + \beta v_1 + \gamma v_2\), then sample the texture at level 0 using the current <b>PixelSampleMethod</b> (P key): <code>sample_nearest</code> or <code>sample_bilinear</code>.</p>
-
-		<h3>Four-way comparison (svg/texmap)</h3>
-		<p>All four screenshots use the same textured scene (e.g. world map from <code>svg/texmap/</code>), with the pixel inspector over a region where the difference is clear (e.g. coastlines or grid lines). Screenshots taken with the <b>S</b> key.</p>
-		<table style="width: 100%; border-collapse: collapse; text-align: center;">
-			<tr>
-				<td style="padding: 8px; vertical-align: top;">
-					<img src="images/task5_nearest1.png" alt="Nearest, 1 sample/pixel" style="max-width: 100%; height: auto;"/>
-					<figcaption><b>Nearest, rate 1.</b> Blocky texture and jagged edges.</figcaption>
-				</td>
-				<td style="padding: 8px; vertical-align: top;">
-					<img src="images/task5_bilinear1.png" alt="Bilinear, 1 sample/pixel" style="max-width: 100%; height: auto;"/>
-					<figcaption><b>Bilinear, rate 1.</b> Smoother texture; edges still aliased.</figcaption>
-				</td>
-			</tr>
-			<tr>
-				<td style="padding: 8px; vertical-align: top;">
-					<img src="images/task5_nearest16.png" alt="Nearest, 16 samples/pixel" style="max-width: 100%; height: auto;"/>
-					<figcaption><b>Nearest, rate 16.</b> Smoother edges; texture still pixelated.</figcaption>
-				</td>
-				<td style="padding: 8px; vertical-align: top;">
-					<img src="images/task5_bilinear16.png" alt="Bilinear, 16 samples/pixel" style="max-width: 100%; height: auto;"/>
-					<figcaption><b>Bilinear, rate 16.</b> Smoothest: smooth texture and edges.</figcaption>
-				</td>
-			</tr>
-		</table>
-		<p><b>When do the two methods differ a lot?</b> When the texture is <b>magnified</b> (one texel covers many screen pixels) or when (u, v) varies smoothly across texel boundaries, nearest gives visible blocks and jagged transitions while bilinear gives gradual blends. At <b>diagonal or curved boundaries</b> in the texture (e.g. coastlines, grid lines), nearest keeps hard steps; bilinear softens them. When the texture is <b>minified</b> or viewed from far away, both can look similar; supersampling (rate 16) mainly improves <b>geometric</b> edges; it doesn’t change the texture’s look, so the blockiness of nearest vs the smoothness of bilinear is visible at both rates.</p>
-
-		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
-
-		<h3>What is level sampling?</h3>
-		<p>When a texture is <b>minified</b>—many texels map to one screen pixel—sampling only from the full-resolution level causes aliasing: high-frequency detail in the texture gets folded into wrong frequencies and we see moiré, shimmer, or noisy pixels. <b>Level sampling</b> (with mipmaps) addresses this by precomputing a pyramid of downsampled texture levels (level 0 = full res, level 1 = half, etc.). For each pixel we estimate <em>which</em> mip level best matches the texel footprint (how much of the texture one pixel “sees”), then sample from that level (or blend between two levels). That way we average many texels in a single lookup instead of point-sampling the full-res texture, which reduces minification aliasing.</p>
-
-		<h3>Implementation</h3>
-		<p><b>Barycentric differentials (rasterizer):</b> In <code>rasterize_textured_triangle</code>, for each sample we have barycentric \((\alpha, \beta, \gamma)\) and interpolated \((u, v)\). The derivatives of \(\alpha, \beta, \gamma\) with respect to screen \(x\) and \(y\) come from the edge vectors and triangle area (e.g. \(\partial\alpha/\partial x = -\mathrm{dy}_1/\mathrm{area2}\)). We compute \(\partial u/\partial x\), \(\partial v/\partial x\), \(\partial u/\partial y\), \(\partial v/\partial y\) from those and the vertex UVs, then set <code>SampleParams</code>: <code>p_uv</code> at the sample, <code>p_dx_uv</code> = uv at \((x+1,y)\), <code>p_dy_uv</code> = uv at \((x,y+1)\), plus <code>psm</code> and <code>lsm</code>. We call <code>tex.sample(sp)</code> instead of sampling at level 0 directly.</p>
-		<p><b>Texture::get_level(sp):</b> From <code>p_dx_uv - p_uv</code> and <code>p_dy_uv - p_uv</code> we get the rate of change of uv per pixel. Scaling by texture width/height gives the footprint in texel space. We take the length of each footprint vector and set \(L = \max(\text{length}_x, \text{length}_y)\). The continuous mip level is \(D = \log_2(L)\), clamped to \([0, \text{numLevels}-1]\). If \(L \le 1\) we use level 0.</p>
-		<p><b>Texture::sample(sp):</b> We compute <code>level = get_level(sp)</code>. For <b>L_ZERO</b> we always sample level 0 with the current pixel sampling method (nearest or bilinear). For <b>L_NEAREST</b> we round <code>level</code> to an integer, clamp it, and sample that mip level. For <b>L_LINEAR</b> we sample at \(\lfloor \text{level} \rfloor\) and \(\lceil \text{level} \rceil\) and blend the two colors by the fractional part of <code>level</code> (trilinear interpolation).</p>
-
-		<h3>Tradeoffs: speed, memory, antialiasing</h3>
-		<p><b>Pixel sampling (P_NEAREST vs P_LINEAR):</b> Nearest is faster (one texel lookup) and uses no extra memory; bilinear does four lookups and interpolation, so slightly more cost. Bilinear gives smoother texture when magnified and softer edges; nearest looks blocky. For minification, pixel sampling alone doesn’t fix aliasing—level sampling is what matters.</p>
-		<p><b>Level sampling (L_ZERO vs L_NEAREST vs L_LINEAR):</b> L_ZERO is fastest (always level 0) but aliases badly when minified. L_NEAREST uses the mip pyramid (one level per pixel) and reduces aliasing; L_LINEAR adds trilinear blending between levels for smoother transitions. L_LINEAR is a bit more expensive (two level samples, then blend) but gives the best antialiasing for textures at a distance.</p>
-		<p><b>Samples per pixel (1 vs 4 vs 16):</b> More samples per pixel improve <em>geometric</em> antialiasing (triangle edges, not texture minification). Cost grows linearly with sample rate (memory and shading); quality improves with diminishing returns. Level sampling addresses texture aliasing; supersampling addresses edge aliasing.</p>
-
-		<h3>Extra credit: Anisotropic filtering</h3>
-		<p>I implemented <b>anisotropic filtering</b> as an extra level-sampling mode (L key cycles to “anisotropic”). Standard mipmapping assumes a roughly square texel footprint; when the footprint is <em>elongated</em> (e.g. a floor or a surface viewed at a steep angle), isotropic filtering picks a level by the <em>max</em> of the two axes and blurs too much along the short axis, losing detail. Anisotropic filtering takes multiple samples along the <em>major</em> axis of the footprint and averages them, so we keep sharpness along the short axis while still averaging along the long axis.</p>
-		<p><b>Implementation:</b> In <code>Texture::sample()</code> when <code>lsm == L_ANISO</code>, I compute the footprint lengths \(L_x\) and \(L_y\) in texel space (same as in <code>get_level</code>). The anisotropy ratio is \(r = L_{\max} / L_{\min}\) (capped at 8). I take \(n = \lceil r \rceil\) samples along the longer of the two footprint directions in UV space, centered at <code>p_uv</code>, each sample with trilinear filtering at level \(\log_2(L_{\max})\), then average the \(n\) colors. UV offsets are clamped to \([0,1]\) so we stay on the texture.</p>
-		<p><b>Comparison with other methods:</b> Anisotropic uses the mip pyramid and multiple samples, removing minification aliasing and reducing blur on angled surfaces (vs L_ZERO/nearest). It chooses the right blur and direction so angled regions look sharper than bilinear alone. Vs trilinear (L_LINEAR), which treats the footprint as isotropic, anisotropic preserves more detail along the “narrow” direction on oblique views; trilinear tends to blur uniformly.</p>
-
-		<h3>Full comparison: all level × pixel combinations with timings</h3>
-		<p>I used a custom PNG (Happy Birthday–style texture) and <code>svg/texmap/task_6.svg</code>. All screenshots use the same scene with the pixel inspector; taken with the <b>S</b> key. Relative performance was measured with <code>clock()</code> around <code>svg.draw()</code> (one redraw per combination). Same resolution and supersample rate for all.</p>
-		<table style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;">
-			<thead>
-				<tr style="background: #f0f0f0;">
-					<th style="border: 1px solid #ccc; padding: 8px; width: 22%;">Level sampling</th>
-					<th style="border: 1px solid #ccc; padding: 8px; width: 39%;">P_NEAREST (nearest pixel)</th>
-					<th style="border: 1px solid #ccc; padding: 8px; width: 39%;">P_LINEAR (bilinear pixel)</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td style="border: 1px solid #ccc; padding: 8px; vertical-align: middle;"><b>L_ZERO</b><br/><small>level 0 only</small></td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_lzero_pnearest.png" alt="L_ZERO, P_NEAREST" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">No mipmapping; nearest texel. Blocky and aliased.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 8.62 ms</p>
-					</td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_lzero_plinear.png" alt="L_ZERO, P_LINEAR" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">No mipmapping; bilinear within level 0.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 11.92 ms</p>
-					</td>
-				</tr>
-				<tr>
-					<td style="border: 1px solid #ccc; padding: 8px; vertical-align: middle;"><b>L_NEAREST</b><br/><small>nearest mip level</small></td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_lnearest_pnearest.png" alt="L_NEAREST, P_NEAREST" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">Mip level per pixel; nearest texel. Less aliasing than L_ZERO.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 5.73 ms</p>
-					</td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_lnearest_plinear.png" alt="L_NEAREST, P_LINEAR" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">Mip level per pixel; bilinear. Good antialiasing, smooth texture.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 9.37 ms</p>
-					</td>
-				</tr>
-				<tr>
-					<td style="border: 1px solid #ccc; padding: 8px; vertical-align: middle;"><b>L_LINEAR</b><br/><small>trilinear</small></td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_ec_llinear_pnearest.png" alt="L_LINEAR, P_NEAREST" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">Trilinear level; nearest texel. Smooth level transitions.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 6.89 ms</p>
-					</td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_ec_llinear_plinear.png" alt="L_LINEAR, P_LINEAR" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">Trilinear + bilinear (full trilinear filtering). Smoothest isotropic.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 17.69 ms</p>
-					</td>
-				</tr>
-				<tr>
-					<td style="border: 1px solid #ccc; padding: 8px; vertical-align: middle;"><b>L_ANISO</b><br/><small>anisotropic (EC)</small></td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_ec_aniso_pnearest.png" alt="L_ANISO, P_NEAREST" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">Anisotropic level; nearest texel. Crisper on angled surfaces.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 11.85 ms</p>
-					</td>
-					<td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
-						<img src="images/task6_ec_aniso_plinear.png" alt="L_ANISO, P_LINEAR" style="max-width: 100%; height: auto; display: block; margin: 0 auto 6px;"/>
-						<figcaption style="margin-bottom: 4px;">Anisotropic + bilinear. Best detail on warped/angled regions.</figcaption>
-						<p style="margin: 0; font-weight: bold;">Time: 24.24 ms</p>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		<p><b>Performance summary:</b> Fastest is L_NEAREST + P_NEAREST (5.73 ms). L_ZERO is simple but aliases. Adding bilinear pixel (P_LINEAR) costs roughly 2–4 ms per combination. Trilinear (L_LINEAR) adds level blending: P_NEAREST 6.89 ms, P_LINEAR 17.69 ms. Anisotropic (L_ANISO) does up to 8 trilinear samples per pixel on elongated footprints: 11.85 ms with P_NEAREST and 24.24 ms with P_LINEAR—the slowest but best quality on angled surfaces. So anisotropic is about 1.4× the cost of trilinear when both use P_LINEAR.</p>
-
-		<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
-		</div>
-	</body>
+		<section>
+			<h2>Additional Notes (please remove)</h2>
+			<ul>
+				<li>You can also add code if you'd like as so: <code>code code code</code></li>
+				<li>If you'd like to add math equations,
+					<ul>
+						<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
+						<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
+					</ul>
+				</li>
+			</ul>
+		</section>
+	</main>
+</body>
 </html>
