@@ -81,19 +81,6 @@
 		.nav a:hover {
 			color: var(--accent);
 		}
-		.nav-links > a::after {
-			content: '';
-			position: absolute;
-			bottom: -4px;
-			left: 0;
-			width: 0;
-			height: 2px;
-			background: var(--accent);
-			transition: width 0.2s ease;
-		}
-		.nav-links > a:hover::after {
-			width: 100%;
-		}
 		.nav .title {
 			font-weight: 600;
 			color: var(--text);
@@ -156,13 +143,11 @@
 			color: var(--text);
 			font-size: 0.875rem;
 			transition: all 0.2s ease;
-			border-left: 3px solid transparent;
 			white-space: nowrap;
 		}
 		.dropdown-content a:hover {
 			background: var(--bg-secondary);
-			border-left-color: var(--accent);
-			color: var(--accent);
+			color: var(--text);
 		}
 
 		main {
@@ -457,7 +442,7 @@
 				<li><strong>Mipmapping:</strong> Developed level-of-detail texture sampling using mipmaps to reduce aliasing when textures are minified, including trilinear filtering and anisotropic filtering for oblique viewing angles.</li>
 			</ul>
 			
-			<p>Through this homework, I gained deep insights into how modern graphics pipelines work at a fundamental level. The most interesting aspects were understanding the tradeoffs between quality and performance (supersampling vs. speed), and seeing how mathematical concepts like barycentric coordinates and linear algebra directly translate into practical rendering techniques. Implementing mipmaps was particularly enlightening—it showed how precomputation and clever data structures can dramatically improve both visual quality and performance.</p>
+			<p>Through this homework, I gained deep insights into how modern graphics pipelines work at a fundamental level. The most interesting aspects were understanding the tradeoffs between quality and performance (supersampling vs. speed), and seeing how mathematical concepts like barycentric coordinates and linear algebra directly translate into practical rendering techniques. Implementing mipmaps was particularly enlightening as it showed how precomputation and clever data structures can dramatically improve both visual quality and performance.</p>
 		</section>
 
 		<section id="task1">
@@ -466,10 +451,9 @@
 			<p>We compute the <b>bounding box</b> of the triangle (min/max of the vertices' \(x\) and \(y\)), clamp it to the screen, then for each pixel in that box test whether the <b>pixel center</b> \((x+0.5, y+0.5)\) lies inside the triangle. We use the <b>three-line edge function</b> from lecture: for each edge from \(A\) to \(B\), \(L = (B.x - A.x)(P.y - A.y) - (B.y - A.y)(P.x - A.x)\), with \(P\) the pixel center. The point is <b>inside</b> if all three \(L\) values have the <b>same sign</b>. We treat both all-positive and all-negative as inside to support <b>CW and CCW</b> winding, and use \(\geq\)/\(\leq\) so samples on edges are drawn. When the center is inside, we call <code>fill_pixel(x, y, color)</code>.</p>
 			<h3>Bounding box efficiency</h3>
 			<p>We only iterate over pixels in the bounding box, so we never test pixels clearly outside the triangle. The cost is one point-in-triangle test per pixel in the box, and we never touch pixels outside it.</p>
-			<h3>Picture 1.1</h3>
 			<figure>
 				<img src="images/task1_screenshot.png" alt="basic/test4.svg with pixel inspector on thin magenta strip"/>
-				<figcaption><b>basic/test4.svg</b> with default view and the pixel inspector over the thin magenta strip. The magnified inset shows <b>two disconnected magenta segments</b> with a gap between them. At <b>1 sample per pixel</b>, the strip is thinner than a pixel in places, so some pixel centers miss it and those pixels stay white — a clear example of <b>aliasing</b> on narrow geometry.</figcaption>
+				<figcaption><b>basic/test4.svg</b> with default view and the pixel inspector over the thin magenta strip. The magnified inset shows <b>two disconnected magenta segments</b> with a gap between them. At <b>1 sample per pixel</b>, the strip is thinner than a pixel in places, so some pixel centers miss it and those pixels stay white. A clear example of <b>aliasing</b> on narrow geometry!</figcaption>
 			</figure>
 			<h3>Extra credit: Optimizations</h3>
 			<p>Beyond the basic bounding box, I added two optimizations and timed them with <code>clock()</code> around <code>svg.draw()</code> in <code>DrawRend::redraw()</code>, on <code>illustration/05_lion.svg</code> at 2000×2000 in headless mode (best of 3 runs).</p>
@@ -550,10 +534,10 @@
 			<h3>The Big Picture</h3>
 			<p>Think of drawing the scene on a <b>finer grid</b> (e.g. 4× or 16× more cells per pixel), then <b>averaging</b> each block of cells down to one pixel. That "higher-res then average" is supersampling: we only do the point-in-triangle test at those finer positions and then blend the results. We still only touch pixels in the triangle's bounding box; we just take several samples per pixel and combine them so edges are antialiased instead of jagged.</p>
 			<h3>Extra credit: Jittered supersampling</h3>
-			<p>I implemented <b>jittered supersampling</b> as an alternative to the default <b>grid</b> supersampling. Toggle between them with the <b>J</b> key; the status line shows "Grid supersampling." or "Jittered supersampling." so you know which mode is active when saving screenshots.</p>
+			<p>I implemented <b>jittered supersampling</b> as an alternative to the default <b>grid</b> supersampling. Toggle between them with the <b>J</b> key; the status line shows "Grid supersampling." or "Jittered supersampling."</p>
 			<p><b>How jittered sampling works:</b> In <b>grid</b> supersampling, the \(n\) samples per pixel sit on a fixed \(\sqrt{n}\times\sqrt{n}\) grid (e.g. sub-cell centers \((i+0.5, j+0.5)\) in normalized coordinates). In <b>jittered</b> sampling, each sample is offset by a small amount <b>within</b> its sub-cell so the pattern is no longer a regular grid. Concretely, for pixel \((x,y)\) and subsample index \(s\) (sub-cell \((i,j)\)), we use \(\text{sample}_x = x + (i + 0.5 + \text{jitter}_x)/\sqrt{n}\) (and similarly for \(y\)), where \(\text{jitter}_x, \text{jitter}_y \in [-0.5, 0.5]\) come from a <b>deterministic hash</b> of \((x, y, s)\) (e.g. \(\sin(x\cdot 127.1 + y\cdot 311.7 + s\cdot 74.7)\) mapped to \([-0.5, 0.5]\)). That keeps the same scene rendering the same every time. The rest of the pipeline is unchanged: point-in-triangle at each sample, write to the sample buffer, resolve by averaging.</p>
 			<p><b>Why jittered can look better:</b> A regular grid aligns samples across pixels, which can reinforce certain aliasing (e.g. stair-stepping or Moiré). Jittering breaks that alignment so the same edge hits different relative positions in different pixels; after averaging, edges often look smoother and thin features can show fewer artifacts than with grid at the same sample count.</p>
-			<p><b>Comparison:</b> Below are three screenshots with <b>Jittered</b> supersampling at sample rates <b>1</b>, <b>4</b>, and <b>16</b> (same scene as above). At rate 1, jittered still shows strong aliasing (one sample per pixel). At 4 and 16, the pixel inspector shows smoother gradients along edges and the thin red line; for a direct grid-vs-jittered comparison, render the same view with Grid and Jittered at the same rate (e.g. 4 or 16) and place the two side by side. All screenshots were taken with the <b>S</b> key.</p>
+			<p><b>Comparison:</b> Below are three screenshots with <b>Jittered</b> supersampling at sample rates <b>1</b>, <b>4</b>, and <b>16</b> (same scene as above). At rate 1, jittered still shows strong aliasing (one sample per pixel). At 4 and 16, the pixel inspector shows smoother gradients along edges and the thin red line.</p>
 			<div class="table-wrap">
 				<table class="comparison-table">
 					<tr>
@@ -590,8 +574,8 @@
 				<li><b>Left arm:</b> <code>translate(-70 -80)</code> at the shoulder; upper arm <code>rotate(65)</code> and <code>scale(0.6 0.2)</code>; forearm <code>translate(10 -65)</code> and <code>rotate(135)</code> (same scale) so the arm goes up and the forearm curves in above the head.</li>
 				<li><b>Right arm:</b> Mirror: <code>translate(70 -80)</code>, <code>rotate(-65)</code> on the upper arm, forearm <code>translate(-10 -65)</code> and <code>rotate(-135)</code> so both arms frame the head.</li>
 			</ul>
-			<p>All limb geometry uses the same two triangles, with only <b>translate</b>, <b>scale</b>, and <b>rotate</b> in the SVG <code>transform</code> attributes, matching the 3×3 homogeneous transforms in <code>transforms.cpp</code>. The screenshot was generated with the <b>S</b> hotkey in the assignment GUI.</p>
-			<h3>Screenshot</h3>
+			<p>All limb geometry uses the same two triangles, with only <b>translate</b>, <b>scale</b>, and <b>rotate</b> in the SVG <code>transform</code> attributes, matching the 3×3 homogeneous transforms in <code>transforms.cpp</code>.</p>
+
 			<figure>
 				<img src="images/task3_screenshot.png" alt="Cubeman in ballet pose from my_robot.svg"/>
 				<figcaption><b>my_robot.svg</b> rendered in the rasterizer: cubeman in a ballet-style pose with arms raised and curved above the head and legs spread with bent knees.</figcaption>
